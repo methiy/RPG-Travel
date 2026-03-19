@@ -125,3 +125,9 @@ export interface City {
   emoji: string
   description: string
 }
+
+export interface AuthUser {
+  id: number
+  username: string
+  displayName: string
+}
