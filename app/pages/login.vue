@@ -56,16 +56,36 @@ const { login } = useAuth()
 const username = ref('')
 const password = ref('')
 const errorMsg = ref('')
+const error = errorMsg
 const loading = ref(false)
 
 async function handleLogin() {
-  errorMsg.value = ''
+  error.value = ''
   loading.value = true
   try {
     await login(username.value, password.value)
+    const { loadFromServer, getLocalMigrationData, migrateLocalToServer } = useGameState()
+
+    // Load server progress first
+    await loadFromServer()
+
+    // Check if local has data and server is empty
+    const localData = getLocalMigrationData()
+    const { state } = useGameState()
+    const serverIsEmpty = state.value.exp === 0 && state.value.completed.length === 0
+
+    if (localData && serverIsEmpty) {
+      const shouldMigrate = confirm(
+        `发现本地存档（${localData.exp} EXP，${localData.completed.length} 个任务）。是否导入到你的账号？`
+      )
+      if (shouldMigrate) {
+        await migrateLocalToServer()
+      }
+    }
+
     await navigateTo('/')
-  } catch (err) {
-    errorMsg.value = err?.message || '登录失败，请检查用户名和密码'
+  } catch (e: any) {
+    error.value = e?.data?.message || e?.statusMessage || '登录失败，请重试'
   } finally {
     loading.value = false
   }

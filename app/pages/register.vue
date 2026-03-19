@@ -123,6 +123,8 @@ async function handleRegister() {
   try {
     const name = displayName.value.trim() || username.value
     await register(username.value, password.value, name)
+    const { loadFromServer } = useGameState()
+    await loadFromServer()
     await navigateTo('/')
   } catch (err) {
     errorMsg.value = err?.message || '注册失败，请稍后重试'

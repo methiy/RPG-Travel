@@ -16,7 +16,7 @@ const LEVELS: { lv: number; title: string; need: number }[] = [
 
 const AVATARS = ['✈️', '🌍', '🗺️', '🧳', '🏅', '🌟', '👑', '🚀']
 
-function loadState(): GameState {
+function loadLocalState(): GameState {
   if (import.meta.server) return { exp: 0, completed: [], medals: [] }
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -25,21 +25,87 @@ function loadState(): GameState {
   return { exp: 0, completed: [], medals: [] }
 }
 
-function saveState(state: GameState) {
+function saveLocalState(state: GameState) {
   if (import.meta.server) return
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
 }
 
-export function useGameState() {
-  const state = useState<GameState>('game-state', () => loadState())
+let syncTimeout: ReturnType<typeof setTimeout> | null = null
 
-  // IMPORTANT: This composable MUST be called during component setup() context.
-  if (import.meta.client) {
-    onNuxtReady(() => {
-      const loaded = loadState()
-      state.value = loaded
+async function syncToServer(state: GameState) {
+  try {
+    await $fetch('/api/progress', {
+      method: 'PUT',
+      body: { exp: state.exp, completed: state.completed, medals: state.medals },
     })
-    watch(state, (val) => saveState(val), { deep: true })
+  } catch {
+    // Silently fail — localStorage has the backup
+  }
+}
+
+export function useGameState() {
+  const state = useState<GameState>('game-state', () => loadLocalState())
+  const { isLoggedIn } = useAuth()
+
+  if (import.meta.client) {
+    onNuxtReady(async () => {
+      // If logged in, load from server; otherwise fall back to localStorage
+      if (isLoggedIn.value) {
+        await loadFromServer()
+      } else {
+        const loaded = loadLocalState()
+        state.value = loaded
+      }
+    })
+
+    watch(state, (val) => {
+      // Always save to localStorage as cache
+      saveLocalState(val)
+
+      // Debounced sync to server when logged in
+      if (isLoggedIn.value) {
+        if (syncTimeout) clearTimeout(syncTimeout)
+        syncTimeout = setTimeout(() => syncToServer(val), 500)
+      }
+    }, { deep: true })
+  }
+
+  /** Load progress from server (call after login) */
+  async function loadFromServer() {
+    try {
+      const data = await $fetch('/api/progress')
+      state.value = {
+        exp: data.exp,
+        completed: data.completed,
+        medals: data.medals,
+      }
+      saveLocalState(state.value)
+    } catch {
+      // Fall back to localStorage
+    }
+  }
+
+  /** Check if localStorage has data that server doesn't */
+  function getLocalMigrationData(): GameState | null {
+    const local = loadLocalState()
+    if (local.exp === 0 && local.completed.length === 0 && local.medals.length === 0) {
+      return null
+    }
+    return local
+  }
+
+  /** Upload local data to server */
+  async function migrateLocalToServer() {
+    const local = loadLocalState()
+    try {
+      await $fetch('/api/progress', {
+        method: 'PUT',
+        body: { exp: local.exp, completed: local.completed, medals: local.medals },
+      })
+      state.value = local
+    } catch {
+      // Keep local data if upload fails
+    }
   }
 
   const levelInfo = computed<LevelInfo>(() => {
@@ -97,5 +163,6 @@ export function useGameState() {
   return {
     state, levelInfo, avatar, completedCount, medalCount, countriesCount,
     completeTask, addExp, addMedal, hasMedal, isTaskCompleted,
+    loadFromServer, getLocalMigrationData, migrateLocalToServer,
   }
 }

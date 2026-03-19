@@ -5,7 +5,7 @@
       <div class="player-wrap">
         <div class="avatar">{{ avatar }}</div>
         <div>
-          <div class="player-name">旅行者</div>
+          <div class="player-name">{{ authState.user?.displayName || '旅行者' }}</div>
           <div class="player-title">{{ levelInfo.title }}</div>
         </div>
       </div>
@@ -36,6 +36,7 @@
           <div class="stat-l">总EXP</div>
         </div>
       </div>
+      <button v-if="authState.user" class="logout-btn" @click="logout" title="退出登录">🚪</button>
       <template #fallback>
         <div class="player-wrap">
           <div class="avatar">✈️</div>
@@ -66,6 +67,7 @@
 
 <script setup lang="ts">
 const { levelInfo, avatar, completedCount, medalCount, countriesCount, state } = useGameState()
+const { authState, logout } = useAuth()
 </script>
 
 <style scoped>
@@ -108,4 +110,17 @@ const { levelInfo, avatar, completedCount, medalCount, countriesCount, state } =
 .stat-v { font-size: 18px; font-weight: 700; color: var(--accent); }
 .stat-l { font-size: 10px; color: var(--muted); margin-top: 1px; }
 .skeleton-bar { background: var(--bg3); border-radius: 4px; }
+.logout-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.logout-btn:hover {
+  background: var(--border);
+}
 </style>
