@@ -15,4 +15,11 @@ export const southAfricaTasks: Task[] = [
     exp: 500, medal: { id: 'safari', icon: '🦁', name: '非洲猎游者', desc: '在野生动物王国找齐五大兽' },
     location: { lat: -24.0167, lng: 31.4833, radius: 5000 },
   },
+  {
+    id: 'za-tm1', city: '开普敦', name: '桌山登顶', difficulty: 'medium', country: '南非',
+    desc: '桌山是开普敦的标志，平坦如桌面的山顶海拔1085米。乘缆车或徒步登顶，360度俯瞰开普敦、大西洋和印度洋，是南非最壮观的城市全景。',
+    objectives: ['乘坐旋转缆车或徒步登上桌山', '在山顶平台俯瞰开普敦全景📸', '沿山顶步道探索高山植被'],
+    exp: 160, medal: { id: 'table-mountain', icon: '⛰️', name: '桌山登顶者', desc: '登上开普敦的标志性桌山' },
+    location: { lat: -33.9625, lng: 18.4039, radius: 500 },
+  },
 ]

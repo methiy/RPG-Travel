@@ -15,4 +15,11 @@ export const uaeTasks: Task[] = [
     exp: 300, medal: { id: 'desert', icon: '🏜️', name: '沙漠征服者', desc: '在金色沙丘上疯狂冲沙' },
     location: { lat: 24.9500, lng: 55.4200, radius: 2000 },
   },
+  {
+    id: 'ae-ad1', city: '阿布扎比', name: '阿布扎比大清真寺', difficulty: 'easy', country: '阿联酋',
+    desc: '谢赫扎耶德大清真寺是世界上最美的清真寺之一，白色大理石与金色穹顶在阳光下闪耀。82个穹顶、1000多根柱子和世界最大的手工编织地毯，奢华到令人窒息。',
+    objectives: ['参观清真寺主殿和庭院', '在倒影池拍摄清真寺全景📸', '欣赏世界最大手工编织地毯和水晶吊灯'],
+    exp: 100, medal: { id: 'grand-mosque', icon: '🕌', name: '大清真寺访客', desc: '参观世界上最美的清真寺之一' },
+    location: { lat: 24.4128, lng: 54.4750, radius: 400 },
+  },
 ]

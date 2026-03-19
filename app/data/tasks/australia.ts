@@ -22,4 +22,18 @@ export const australiaTasks: Task[] = [
     exp: 550, medal: { id: 'heart-reef', icon: '💙', name: '心形礁发现者', desc: '从空中发现大自然的爱心' },
     location: { lat: -19.7590, lng: 148.9426, radius: 3000 },
   },
+  {
+    id: 'au-ul1', city: '乌鲁鲁', name: '乌鲁鲁日落', difficulty: 'medium', country: '澳大利亚',
+    desc: '乌鲁鲁（艾尔斯岩）是澳大利亚内陆的巨型红色巨石，在日落时从橙色变为深红再到紫色，是原住民心中最神圣的土地。',
+    objectives: ['在日落观景区等待乌鲁鲁变色📸', '参加原住民文化体验活动', '在星空下享用沙漠晚餐'],
+    exp: 200, medal: { id: 'uluru', icon: '🪨', name: '乌鲁鲁朝圣者', desc: '在澳大利亚红色心脏见证日落变色' },
+    location: { lat: -25.3444, lng: 131.0369, radius: 2000 },
+  },
+  {
+    id: 'au-ml1', city: '墨尔本', name: '墨尔本大洋路', difficulty: 'medium', country: '澳大利亚',
+    desc: '大洋路是世界上最壮观的海滨公路之一，十二使徒岩在南大洋的波涛中矗立了千万年。沿途的悬崖、海浪和热带雨林让人目不暇接。',
+    objectives: ['沿大洋路自驾或乘巴士', '在十二使徒岩观景台拍照📸', '在洛恩小镇停留品尝海鲜'],
+    exp: 180, medal: { id: 'great-ocean-road', icon: '🛣️', name: '大洋路驾驶者', desc: '驾驶世界最壮观的海滨公路' },
+    location: { lat: -38.6632, lng: 143.1047, radius: 2000 },
+  },
 ]

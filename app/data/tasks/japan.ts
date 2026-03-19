@@ -81,4 +81,93 @@ export const japanTasks: Task[] = [
     exp: 150, medal: { id: 'sagano', icon: '🚂', name: '嵯峨野旅人', desc: '乘坐日本最美观光小火车' },
     location: { lat: 35.0175, lng: 135.6730, radius: 500 },
   },
+  // 东京追加
+  {
+    id: 'jp-tk1', city: '东京', name: '浅草寺雷门打卡', difficulty: 'easy', country: '日本',
+    desc: '浅草寺是东京最古老的寺庙，雷门大灯笼是东京的标志之一。穿过仲见世商店街，感受江户时代的热闹氛围。',
+    objectives: ['在雷门大灯笼前合影📸', '穿越仲见世商店街', '在浅草寺本堂参拜许愿'],
+    exp: 80, medal: { id: 'sensoji', icon: '🏮', name: '浅草寺参拜者', desc: '打卡东京最古老的寺庙' },
+    location: { lat: 35.7148, lng: 139.7967, radius: 300 },
+  },
+  // 京都追加
+  {
+    id: 'jp-kt1', city: '大阪·京都', name: '金阁寺拍倒影', difficulty: 'easy', country: '日本',
+    desc: '金阁寺（鹿苑寺）以金箔覆盖的三层楼阁闻名于世，倒映在镜湖池中的金色阁楼美如梦境，是京都最具代表性的禅意画面。',
+    objectives: ['在镜湖池前拍摄金阁倒影📸', '品尝寺内的抹茶甜品', '沿庭院步道漫步一圈'],
+    exp: 80, medal: { id: 'kinkaku', icon: '✨', name: '金阁寺访客', desc: '见证金色梦幻的禅寺' },
+    location: { lat: 35.0394, lng: 135.7292, radius: 300 },
+  },
+  {
+    id: 'jp-kt2', city: '大阪·京都', name: '清水寺观景台眺望', difficulty: 'easy', country: '日本',
+    desc: '清水寺的清水舞台悬于悬崖之上，不用一颗钉子建成。站在舞台上远眺京都市区与东山群峰，四季皆有不同风情。',
+    objectives: ['登上清水舞台远眺京都', '在音羽瀑布接水祈福', '逛二年坂·三年坂石板路'],
+    exp: 90, medal: { id: 'kiyomizu', icon: '⛩️', name: '清水寺眺望者', desc: '在千年古刹俯瞰京都' },
+    location: { lat: 34.9949, lng: 135.7850, radius: 300 },
+  },
+  // 福冈
+  {
+    id: 'jp-fk1', city: '福冈', name: '博多运河城吃博多拉面', difficulty: 'easy', country: '日本',
+    desc: '博多拉面是福冈的灵魂美食，浓郁的豚骨白汤配上极细直面，一口下去满嘴鲜香。运河城拉面竞技场汇聚多家名店。',
+    objectives: ['在运河城拉面竞技场选一家店', '品尝正宗博多豚骨拉面', '体验"替玉"加面文化'],
+    exp: 80, medal: { id: 'hakata-ramen', icon: '🍜', name: '博多拉面通', desc: '品尝福冈灵魂美食博多拉面' },
+    location: { lat: 33.5902, lng: 130.4017, radius: 300 },
+  },
+  {
+    id: 'jp-fk2', city: '福冈', name: '太宰府天满宫祈学业', difficulty: 'easy', country: '日本',
+    desc: '太宰府天满宫供奉学问之神菅原道真，是全日本学生的祈愿圣地。参道上的梅枝饼香气四溢，是福冈必吃名物。',
+    objectives: ['在天满宫本殿前参拜祈福', '品尝参道上的梅枝饼', '拍摄境内飞梅与太鼓桥📸'],
+    exp: 70, medal: { id: 'dazaifu', icon: '⛩️', name: '太宰府参拜者', desc: '在学问之神前祈愿' },
+    location: { lat: 33.5215, lng: 130.5349, radius: 300 },
+  },
+  {
+    id: 'jp-fk3', city: '福冈', name: '中洲屋台夜间觅食', difficulty: 'easy', country: '日本',
+    desc: '中洲是福冈的不夜城，河畔的屋台（路边摊）是日本独有的夜间美食文化。坐在简陋的塑料凳上吃博多串烧，是最地道的福冈夜生活。',
+    objectives: ['晚上8点后前往中洲屋台街', '在屋台品尝博多串烧或关东煮', '与老板和邻座聊天体验屋台文化'],
+    exp: 80, medal: { id: 'nakasu-yatai', icon: '🏮', name: '中洲屋台食客', desc: '体验福冈最地道的夜间美食文化' },
+    location: { lat: 33.5913, lng: 130.4035, radius: 300 },
+  },
+  // 北海道
+  {
+    id: 'jp-hk1', city: '北海道', name: '小樽运河漫步', difficulty: 'easy', country: '日本',
+    desc: '小樽运河是北海道最浪漫的地标，石造仓库群倒映在运河水面上。冬天飘雪时的运河夜景宛如童话世界。',
+    objectives: ['沿小樽运河步道漫步拍照📸', '参观运河旁的玻璃工坊', '品尝小樽名物寿司或六花亭甜品'],
+    exp: 80, medal: { id: 'otaru-canal', icon: '🚢', name: '小樽运河行者', desc: '漫步北海道最浪漫的运河' },
+    location: { lat: 43.1907, lng: 140.9946, radius: 300 },
+  },
+  {
+    id: 'jp-hk2', city: '北海道', name: '富良野薰衣草田', difficulty: 'medium', country: '日本',
+    desc: '每年7月，富良野的薰衣草田盛放成紫色花海，空气中弥漫着薰衣草的清香。富田农场是最经典的观赏地。',
+    objectives: ['在富田农场薰衣草田拍照📸', '品尝薰衣草冰淇淋', '登上展望台俯瞰花田全景'],
+    exp: 150, medal: { id: 'furano-lavender', icon: '💜', name: '富良野花田客', desc: '置身北海道紫色花海' },
+    location: { lat: 43.3487, lng: 142.3832, radius: 500 },
+  },
+  {
+    id: 'jp-hk3', city: '北海道', name: '登别地狱谷泡温泉', difficulty: 'easy', country: '日本',
+    desc: '登别地狱谷是火山喷气口形成的奇景，热气腾腾的硫磺谷宛如地狱入口。泡完温泉后身体暖洋洋，是北海道冬日最治愈的体验。',
+    objectives: ['沿步道参观地狱谷火山喷气口', '在登别温泉街泡一次正宗硫磺温泉', '品尝温泉蛋和当地甜点'],
+    exp: 90, medal: { id: 'noboribetsu', icon: '♨️', name: '登别温泉客', desc: '在地狱谷旁享受天然温泉' },
+    location: { lat: 42.4942, lng: 141.1594, radius: 400 },
+  },
+  // 冲绳
+  {
+    id: 'jp-ok1', city: '冲绳', name: '美之海水族馆看鲸鲨', difficulty: 'easy', country: '日本',
+    desc: '冲绳美之海水族馆拥有世界最大的水族箱"黑潮之海"，巨大的鲸鲨在头顶悠然游过，仿佛置身深海之中。',
+    objectives: ['在黑潮之海前观赏鲸鲨📸', '观看海豚表演', '在水族馆咖啡厅享受海景午餐'],
+    exp: 90, medal: { id: 'churaumi', icon: '🐋', name: '美之海访客', desc: '在世界最大水族箱前邂逅鲸鲨' },
+    location: { lat: 26.6942, lng: 127.8775, radius: 300 },
+  },
+  {
+    id: 'jp-ok2', city: '冲绳', name: '首里城探访琉球王国', difficulty: 'medium', country: '日本',
+    desc: '首里城是琉球王国的王宫，融合了中国与日本的建筑风格。虽经火灾重建，但红墙碧瓦间依然能感受到琉球王朝的辉煌。',
+    objectives: ['参观首里城正殿与御庭园区', '了解琉球王国历史', '在守礼门前拍照📸'],
+    exp: 150, medal: { id: 'shuri', icon: '🏯', name: '琉球探访者', desc: '探访琉球王国的王城' },
+    location: { lat: 26.2172, lng: 127.7195, radius: 300 },
+  },
+  {
+    id: 'jp-ok3', city: '冲绳', name: '万座毛观断崖日落', difficulty: 'easy', country: '日本',
+    desc: '万座毛是冲绳西海岸的天然断崖绝壁，象鼻岩是其标志性景观。日落时分，橙红色的夕阳沉入东海，壮美无比。',
+    objectives: ['沿步道走到万座毛断崖观景台', '拍摄象鼻岩与日落📸', '在附近海滩感受冲绳的海风'],
+    exp: 80, medal: { id: 'manzamo', icon: '🌅', name: '万座毛观景者', desc: '在冲绳断崖上看最美日落' },
+    location: { lat: 26.5044, lng: 127.7710, radius: 300 },
+  },
 ]
