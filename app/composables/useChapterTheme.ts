@@ -1,4 +1,4 @@
-import { CHAPTERS } from '~/data/chapters'
+import { COUNTRIES } from '~/data/countries'
 
 const DEFAULT_THEME = {
   primary: '#4a9eff',
@@ -17,7 +17,7 @@ export function useChapterTheme(chapterId?: Ref<string> | string) {
       el.style.removeProperty('--theme-pattern')
       return
     }
-    const chapter = CHAPTERS.find(c => c.id === id)
+    const chapter = COUNTRIES.find(c => c.id === id)
     if (!chapter) return
     el.style.setProperty('--theme-primary', chapter.theme.primary)
     el.style.setProperty('--theme-secondary', chapter.theme.secondary)
