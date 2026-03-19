@@ -63,6 +63,8 @@ function onOverlayClick(e: MouseEvent) {
           </ul>
         </div>
 
+        <TravelGuidePanel v-if="task?.guide" :guide="task.guide" />
+
         <div class="tm-section">
           <h4>🎁 完成奖励</h4>
           <div class="rewards-row">

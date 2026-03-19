@@ -18,11 +18,26 @@ export interface Chapter {
   theme: ChapterTheme
 }
 
+export interface TaskLocation {
+  lat: number
+  lng: number
+  radius: number  // meters, how close you need to be
+}
+
 export interface Medal {
   id: string
   icon: string
   name: string
   desc: string
+}
+
+export interface TaskGuide {
+  tips: string[]           // Practical travel tips
+  foodSpots: string[]      // Recommended food/cafes
+  transport: string[]      // How to get there
+  bestTime: string         // Best time to visit
+  budget: string           // Budget estimate
+  localTips: string[]      // Local insider tips
 }
 
 export interface Task {
@@ -35,6 +50,8 @@ export interface Task {
   objectives: string[]
   exp: number
   medal: Medal
+  guide?: TaskGuide
+  location?: TaskLocation
 }
 
 export interface GameState {
