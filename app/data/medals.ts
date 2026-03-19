@@ -1,4 +1,4 @@
-import { TASKS } from './tasks'
+import { TASKS } from './tasks/index'
 import type { Medal } from '~/types'
 
 const GAME_MEDALS: Medal[] = [

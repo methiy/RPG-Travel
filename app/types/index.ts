@@ -96,3 +96,32 @@ export interface Landmark {
   icon: string
   name: string
 }
+
+export interface Continent {
+  id: string
+  name: string
+  emoji: string
+  unlockExp: number
+  description: string
+}
+
+export interface Country {
+  id: string
+  continentId: string
+  name: string
+  subtitle: string
+  emoji: string
+  bg: string
+  cities: string[]      // city IDs
+  tags: string[]
+  description: string
+  theme: ChapterTheme
+}
+
+export interface City {
+  id: string
+  countryId: string
+  name: string
+  emoji: string
+  description: string
+}
