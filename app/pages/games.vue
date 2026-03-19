@@ -9,6 +9,9 @@
       <QuizGame v-if="activeGame === 'quiz'" />
       <PackingGame v-if="activeGame === 'packing'" />
       <MatchGame v-if="activeGame === 'match'" />
+      <FlagGuessGame v-if="activeGame === 'flags'" />
+      <DistanceGuessGame v-if="activeGame === 'distance'" />
+      <CurrencyGuessGame v-if="activeGame === 'currency'" />
     </template>
 
     <div v-else class="games-grid">
@@ -28,13 +31,16 @@
 </template>
 
 <script setup lang="ts">
-const activeGame = ref<null | 'roulette' | 'quiz' | 'packing' | 'match'>(null)
+const activeGame = ref<null | 'roulette' | 'quiz' | 'packing' | 'match' | 'flags' | 'distance' | 'currency'>(null)
 
 const games = [
   { id: 'roulette' as const, icon: '🎡', title: '假期轮盘', desc: '转动命运之轮，随机为你决定下一个旅行目的地！', reward: '🎲 每天可转3次' },
   { id: 'quiz' as const, icon: '🧭', title: '旅行知识问答', desc: '测试你的全球地理和旅行文化知识，答对赢经验！', reward: '⚡ 每题 +15~20 EXP' },
   { id: 'packing' as const, icon: '🧳', title: '行李打包挑战', desc: '针对不同目的地，快速打包必备物品，别带错了！', reward: '⚡ 完成 +80 EXP' },
   { id: 'match' as const, icon: '🃏', title: '地标配对游戏', desc: '翻牌配对全球知名地标，考验你的地理记忆力！', reward: '⚡ 完成 +60 EXP' },
+  { id: 'flags' as const, icon: '🏳️', title: '国旗猜猜猜', desc: '看国旗猜国家，测试你的全球视野！', reward: '⚡ 每题 +5 EXP' },
+  { id: 'distance' as const, icon: '📏', title: '距离猜猜猜', desc: '猜两个城市之间的飞行距离，看你的地理直觉准不准！', reward: '⚡ 精准 +30 EXP' },
+  { id: 'currency' as const, icon: '💰', title: '汇率挑战', desc: '看当地价格猜人民币价格，出国消费心里有数！', reward: '⚡ 精准 +20 EXP' },
 ]
 </script>
 
