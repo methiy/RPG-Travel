@@ -11,7 +11,13 @@
 
       <div class="fg-timer" :class="{ urgent: timer <= 2 }">⏱️ {{ timer }}s</div>
 
-      <div class="fg-flag">{{ currentFlag.flag }}</div>
+      <div class="fg-flag">
+        <img
+          :src="`https://flagcdn.com/w160/${currentFlag.code}.png`"
+          :alt="currentFlag.name"
+          class="fg-flag-img"
+        />
+      </div>
 
       <div class="fg-options">
         <button
@@ -50,22 +56,22 @@
 const { addExp, addMedal } = useGameState()
 
 const FLAGS = [
-  {flag:'🇯🇵',name:'日本'}, {flag:'🇰🇷',name:'韩国'}, {flag:'🇨🇳',name:'中国'},
-  {flag:'🇹🇭',name:'泰国'}, {flag:'🇸🇬',name:'新加坡'}, {flag:'🇲🇾',name:'马来西亚'},
-  {flag:'🇮🇩',name:'印度尼西亚'}, {flag:'🇻🇳',name:'越南'}, {flag:'🇵🇭',name:'菲律宾'},
-  {flag:'🇫🇷',name:'法国'}, {flag:'🇮🇹',name:'意大利'}, {flag:'🇪🇸',name:'西班牙'},
-  {flag:'🇩🇪',name:'德国'}, {flag:'🇬🇧',name:'英国'}, {flag:'🇺🇸',name:'美国'},
-  {flag:'🇧🇷',name:'巴西'}, {flag:'🇲🇽',name:'墨西哥'}, {flag:'🇦🇺',name:'澳大利亚'},
-  {flag:'🇳🇿',name:'新西兰'}, {flag:'🇪🇬',name:'埃及'}, {flag:'🇿🇦',name:'南非'},
-  {flag:'🇦🇪',name:'阿联酋'}, {flag:'🇮🇳',name:'印度'}, {flag:'🇹🇷',name:'土耳其'},
-  {flag:'🇷🇺',name:'俄罗斯'}, {flag:'🇨🇦',name:'加拿大'}, {flag:'🇵🇪',name:'秘鲁'},
-  {flag:'🇨🇱',name:'智利'}, {flag:'🇬🇷',name:'希腊'}, {flag:'🇵🇹',name:'葡萄牙'},
-  {flag:'🇳🇴',name:'挪威'}, {flag:'🇸🇪',name:'瑞典'}, {flag:'🇫🇮',name:'芬兰'},
-  {flag:'🇨🇭',name:'瑞士'}, {flag:'🇦🇹',name:'奥地利'}, {flag:'🇳🇱',name:'荷兰'},
-  {flag:'🇧🇪',name:'比利时'}, {flag:'🇵🇱',name:'波兰'}, {flag:'🇨🇿',name:'捷克'},
-  {flag:'🇭🇺',name:'匈牙利'}, {flag:'🇭🇷',name:'克罗地亚'}, {flag:'🇲🇦',name:'摩洛哥'},
-  {flag:'🇰🇪',name:'肯尼亚'}, {flag:'🇪🇹',name:'埃塞俄比亚'}, {flag:'🇨🇴',name:'哥伦比亚'},
-  {flag:'🇦🇷',name:'阿根廷'}, {flag:'🇯🇲',name:'牙买加'}, {flag:'🇨🇺',name:'古巴'},
+  {code:'jp',name:'日本'}, {code:'kr',name:'韩国'}, {code:'cn',name:'中国'},
+  {code:'th',name:'泰国'}, {code:'sg',name:'新加坡'}, {code:'my',name:'马来西亚'},
+  {code:'id',name:'印度尼西亚'}, {code:'vn',name:'越南'}, {code:'ph',name:'菲律宾'},
+  {code:'fr',name:'法国'}, {code:'it',name:'意大利'}, {code:'es',name:'西班牙'},
+  {code:'de',name:'德国'}, {code:'gb',name:'英国'}, {code:'us',name:'美国'},
+  {code:'br',name:'巴西'}, {code:'mx',name:'墨西哥'}, {code:'au',name:'澳大利亚'},
+  {code:'nz',name:'新西兰'}, {code:'eg',name:'埃及'}, {code:'za',name:'南非'},
+  {code:'ae',name:'阿联酋'}, {code:'in',name:'印度'}, {code:'tr',name:'土耳其'},
+  {code:'ru',name:'俄罗斯'}, {code:'ca',name:'加拿大'}, {code:'pe',name:'秘鲁'},
+  {code:'cl',name:'智利'}, {code:'gr',name:'希腊'}, {code:'pt',name:'葡萄牙'},
+  {code:'no',name:'挪威'}, {code:'se',name:'瑞典'}, {code:'fi',name:'芬兰'},
+  {code:'ch',name:'瑞士'}, {code:'at',name:'奥地利'}, {code:'nl',name:'荷兰'},
+  {code:'be',name:'比利时'}, {code:'pl',name:'波兰'}, {code:'cz',name:'捷克'},
+  {code:'hu',name:'匈牙利'}, {code:'hr',name:'克罗地亚'}, {code:'ma',name:'摩洛哥'},
+  {code:'ke',name:'肯尼亚'}, {code:'et',name:'埃塞俄比亚'}, {code:'co',name:'哥伦比亚'},
+  {code:'ar',name:'阿根廷'}, {code:'jm',name:'牙买加'}, {code:'cu',name:'古巴'},
 ]
 
 function shuffle<T>(arr: T[]): T[] {
@@ -198,9 +204,14 @@ onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
 
 .fg-flag {
   text-align: center;
-  font-size: 80px;
-  line-height: 1.2;
   margin-bottom: 20px;
+}
+.fg-flag-img {
+  width: 160px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+  border: 2px solid var(--border);
 }
 
 .fg-options {

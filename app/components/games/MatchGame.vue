@@ -174,28 +174,35 @@ onUnmounted(() => {
   justify-content: space-between;
   font-size: 13px;
   color: var(--muted);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .match-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 12px;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .match-card {
   aspect-ratio: 1;
   background: linear-gradient(135deg, #1a2540, #0d1020);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 28px;
   cursor: pointer;
   transition: all .3s;
   user-select: none;
+  min-height: 0;
 }
 .match-card:hover { border-color: var(--accent) }
 .match-card.flipped {
