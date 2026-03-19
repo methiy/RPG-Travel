@@ -23,7 +23,8 @@ logs
 .env.*
 !.env.example
 
-# SQLite database files
+# Database files
 data/*.db
 data/*.db-wal
 data/*.db-shm
+data/*.json

@@ -1,90 +1,120 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { resolve } from 'path'
-import initSqlJs, { type Database } from 'sql.js'
 
 const DB_DIR = resolve('data')
-const DB_PATH = resolve('data/travelrpg.db')
+const DB_PATH = resolve('data/travelrpg.json')
 
-// Wasmfile path — Nitro bundles node_modules so we resolve at runtime
-const WASM_PATH = resolve('node_modules/sql.js/dist/sql-wasm.wasm')
+interface UserRecord {
+  id: number
+  username: string
+  display_name: string
+  password_hash: string
+  created_at: string
+}
 
-let db: Database | null = null
-let initPromise: Promise<Database> | null = null
+interface ProgressRecord {
+  user_id: number
+  exp: number
+  completed: string[]
+  medals: string[]
+  updated_at: string
+}
 
-const CREATE_TABLES_SQL = `
-CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT UNIQUE NOT NULL,
-  display_name TEXT NOT NULL,
-  password_hash TEXT NOT NULL,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+interface DBData {
+  users: UserRecord[]
+  game_progress: ProgressRecord[]
+  nextUserId: number
+}
 
-CREATE TABLE IF NOT EXISTS game_progress (
-  user_id INTEGER PRIMARY KEY REFERENCES users(id),
-  exp INTEGER DEFAULT 0,
-  completed TEXT DEFAULT '[]',
-  medals TEXT DEFAULT '[]',
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-`
+let data: DBData | null = null
 
-async function initDB(): Promise<Database> {
-  // Ensure data/ directory exists
+function defaultData(): DBData {
+  return { users: [], game_progress: [], nextUserId: 1 }
+}
+
+function loadData(): DBData {
+  if (data) return data
+
   if (!existsSync(DB_DIR)) {
     mkdirSync(DB_DIR, { recursive: true })
   }
 
-  const SQL = await initSqlJs({
-    // Provide the wasm binary directly so sql.js doesn't try to fetch it
-    wasmBinary: readFileSync(WASM_PATH),
+  if (existsSync(DB_PATH)) {
+    try {
+      const raw = readFileSync(DB_PATH, 'utf-8')
+      data = JSON.parse(raw) as DBData
+    } catch {
+      data = defaultData()
+    }
+  } else {
+    data = defaultData()
+  }
+
+  return data
+}
+
+function saveData(): void {
+  if (!data) return
+  writeFileSync(DB_PATH, JSON.stringify(data, null, 2))
+}
+
+// ---- Public API ----
+
+export function findUserByUsername(username: string): UserRecord | undefined {
+  const db = loadData()
+  return db.users.find(u => u.username === username)
+}
+
+export function findUserById(id: number): UserRecord | undefined {
+  const db = loadData()
+  return db.users.find(u => u.id === id)
+}
+
+export function createUser(username: string, displayName: string, passwordHash: string): UserRecord {
+  const db = loadData()
+  const user: UserRecord = {
+    id: db.nextUserId++,
+    username,
+    display_name: displayName,
+    password_hash: passwordHash,
+    created_at: new Date().toISOString(),
+  }
+  db.users.push(user)
+
+  // Create empty progress
+  db.game_progress.push({
+    user_id: user.id,
+    exp: 0,
+    completed: [],
+    medals: [],
+    updated_at: new Date().toISOString(),
   })
 
-  let database: Database
+  saveData()
+  return user
+}
 
-  if (existsSync(DB_PATH)) {
-    // Load existing database from disk
-    const fileBuffer = readFileSync(DB_PATH)
-    database = new SQL.Database(fileBuffer)
+export function getProgress(userId: number): ProgressRecord | undefined {
+  const db = loadData()
+  return db.game_progress.find(p => p.user_id === userId)
+}
+
+export function saveProgress(userId: number, exp: number, completed: string[], medals: string[]): void {
+  const db = loadData()
+  const idx = db.game_progress.findIndex(p => p.user_id === userId)
+  const record: ProgressRecord = {
+    user_id: userId,
+    exp,
+    completed,
+    medals,
+    updated_at: new Date().toISOString(),
+  }
+
+  if (idx >= 0) {
+    db.game_progress[idx] = record
   } else {
-    // Create a fresh database
-    database = new SQL.Database()
+    db.game_progress.push(record)
   }
 
-  // Create tables if they don't exist
-  database.run(CREATE_TABLES_SQL)
-
-  // Persist immediately so the file exists from the start
-  saveDB(database)
-
-  return database
-}
-
-/**
- * Persist the in-memory sql.js database to disk.
- * Must be called after every mutation.
- */
-export function saveDB(database?: Database): void {
-  const target = database ?? db
-  if (!target) return
-  const data = target.export()
-  writeFileSync(DB_PATH, Buffer.from(data))
-}
-
-/**
- * Returns the singleton database instance.
- * Initialises on first call; subsequent calls return the cached instance.
- */
-export async function useDB(): Promise<Database> {
-  if (db) return db
-
-  // Deduplicate concurrent init calls
-  if (!initPromise) {
-    initPromise = initDB().then((database) => {
-      db = database
-      return database
-    })
-  }
-
-  return initPromise
+  saveData()
 }

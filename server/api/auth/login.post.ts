@@ -1,4 +1,4 @@
-import { useDB } from '../../database/index'
+import { findUserByUsername } from '../../database/index'
 import { verifyPassword } from '../../utils/password'
 import { setAuthCookie } from '../../utils/auth'
 
@@ -7,53 +7,22 @@ export default defineEventHandler(async (event) => {
   const { username, password } = body ?? {}
 
   if (!username || !password) {
-    throw createError({
-      statusCode: 401,
-      message: '用户名或密码错误',
-    })
+    throw createError({ statusCode: 400, message: '请输入用户名和密码' })
   }
 
-  const db = await useDB()
-
-  // ── Look up user ───────────────────────────────────────────────────────────
-  const stmt = db.prepare(
-    'SELECT id, username, display_name, password_hash FROM users WHERE username = :username',
-  )
-  stmt.bind({ ':username': username })
-  const found = stmt.step()
-  const row = found
-    ? (stmt.getAsObject() as {
-        id: number
-        username: string
-        display_name: string
-        password_hash: string
-      })
-    : null
-  stmt.free()
-
-  if (!row) {
-    throw createError({
-      statusCode: 401,
-      message: '用户名或密码错误',
-    })
+  const user = findUserByUsername(username)
+  if (!user) {
+    throw createError({ statusCode: 401, message: '用户名或密码错误' })
   }
 
-  // ── Verify password ────────────────────────────────────────────────────────
-  const valid = await verifyPassword(password, row.password_hash)
+  const valid = await verifyPassword(password, user.password_hash)
   if (!valid) {
-    throw createError({
-      statusCode: 401,
-      message: '用户名或密码错误',
-    })
+    throw createError({ statusCode: 401, message: '用户名或密码错误' })
   }
 
-  setAuthCookie(event, row.id)
+  setAuthCookie(event, user.id)
 
   return {
-    user: {
-      id: row.id,
-      username: row.username,
-      displayName: row.display_name,
-    },
+    user: { id: user.id, username: user.username, displayName: user.display_name },
   }
 })
