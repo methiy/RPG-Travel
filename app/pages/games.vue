@@ -7,6 +7,8 @@
       <button class="back-btn" @click="activeGame = null">← 返回游戏列表</button>
       <RouletteGame v-if="activeGame === 'roulette'" />
       <QuizGame v-if="activeGame === 'quiz'" />
+      <PackingGame v-if="activeGame === 'packing'" />
+      <MatchGame v-if="activeGame === 'match'" />
     </template>
 
     <div v-else class="games-grid">
