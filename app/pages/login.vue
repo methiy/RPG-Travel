@@ -48,7 +48,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 definePageMeta({ layout: false })
 
 const { login } = useAuth()
@@ -56,11 +56,10 @@ const { login } = useAuth()
 const username = ref('')
 const password = ref('')
 const errorMsg = ref('')
-const error = errorMsg
 const loading = ref(false)
 
 async function handleLogin() {
-  error.value = ''
+  errorMsg.value = ''
   loading.value = true
   try {
     await login(username.value, password.value)
@@ -84,8 +83,9 @@ async function handleLogin() {
     }
 
     await navigateTo('/')
-  } catch (e: any) {
-    error.value = e?.data?.message || e?.statusMessage || '登录失败，请重试'
+  } catch (e: unknown) {
+    const err = e as { data?: { message?: string }; statusMessage?: string }
+    errorMsg.value = err?.data?.message || err?.statusMessage || '登录失败，请重试'
   } finally {
     loading.value = false
   }

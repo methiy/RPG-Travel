@@ -76,7 +76,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 definePageMeta({ layout: false })
 
 const { register } = useAuth()
@@ -86,13 +86,13 @@ const displayName = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const errorMsg = ref('')
-const fieldErrors = ref({})
+const fieldErrors = ref<Record<string, string>>({})
 const loading = ref(false)
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/
 
 function validate() {
-  const errors = {}
+  const errors: Record<string, string> = {}
 
   if (!USERNAME_RE.test(username.value)) {
     errors.username = '用户名只能包含字母、数字和下划线，长度3-20位'
@@ -126,8 +126,9 @@ async function handleRegister() {
     const { loadFromServer } = useGameState()
     await loadFromServer()
     await navigateTo('/')
-  } catch (err) {
-    errorMsg.value = err?.message || '注册失败，请稍后重试'
+  } catch (e: unknown) {
+    const err = e as { data?: { message?: string }; statusMessage?: string }
+    errorMsg.value = err?.data?.message || err?.statusMessage || '注册失败，请稍后重试'
   } finally {
     loading.value = false
   }
