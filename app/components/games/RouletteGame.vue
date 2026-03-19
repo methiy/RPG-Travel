@@ -25,7 +25,7 @@
       <div class="result-dest">{{ result.flags }} {{ result.name }}</div>
       <div class="result-desc">{{ result.desc }}</div>
       <div class="result-desc" style="margin-top: 6px">最佳季节：{{ result.best }}</div>
-      <button class="result-cta" @click="navigateTo('/world')">查看相关任务 →</button>
+      <button class="result-cta" @click="navigateTo('/')">查看相关任务 →</button>
     </div>
   </div>
 </template>

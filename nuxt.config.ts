@@ -5,6 +5,9 @@ export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4,
   },
+  components: [
+    { path: '~/components', pathPrefix: false },
+  ],
   app: {
     pageTransition: { name: 'fade', mode: 'out-in' },
     head: {

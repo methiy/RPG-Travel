@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌍 旅行者传说 - 全球旅游RPG</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07090f;--bg2:#0d1020;--bg3:#131828;--border:#1e2d4a;
+  --accent:#4a9eff;--accent2:#7b5ea7;--gold:#ffd700;--green:#3ddc84;
+  --red:#ff5555;--text:#e8eaf6;--muted:#6b7fa3;
+}
+body{font-family:'PingFang SC','Microsoft YaHei','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ===== TOPBAR ===== */
+.topbar{
+  background:linear-gradient(135deg,#0d1020,#131828);
+  border-bottom:1px solid var(--border);
+  padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:100;backdrop-filter:blur(10px);
+}
+.logo{font-size:18px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
+.player-wrap{display:flex;align-items:center;gap:10px}
+.avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid var(--accent);flex-shrink:0}
+.player-name{font-size:13px;font-weight:700;color:#fff}
+.player-title{font-size:11px;color:var(--accent);margin-top:1px}
+.exp-wrap{flex:1;min-width:160px}
+.exp-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px}
+.exp-bar{height:6px;background:#1a2540;border-radius:3px;overflow:hidden}
+.exp-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width 1s ease}
+.stats-row{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 12px;text-align:center}
+.stat-v{font-size:18px;font-weight:700;color:var(--accent)}
+.stat-l{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* ===== NAV ===== */
+.mainnav{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);overflow-x:auto}
+.mainnav::-webkit-scrollbar{display:none}
+.navbtn{padding:12px 20px;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s}
+.navbtn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.navbtn:hover{color:var(--text)}
+
+/* ===== PAGES ===== */
+.page{display:none;min-height:calc(100vh - 120px)}
+.page.active{display:block}
+
+/* ===== WORLD MAP PAGE ===== */
+.world-page{padding:24px}
+.world-header{margin-bottom:24px}
+.world-header h2{font-size:24px;font-weight:800;margin-bottom:6px}
+.world-header p{color:var(--muted)}
+.chapters-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.chapter-card{
+  background:var(--bg3);border:1px solid var(--border);border-radius:16px;
+  overflow:hidden;cursor:pointer;transition:all .3s;position:relative;
+}
+.chapter-card:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 12px 30px rgba(74,158,255,.2)}
+.chapter-card.locked{opacity:.5;cursor:not-allowed}
+.chapter-card.locked:hover{transform:none;border-color:var(--border);box-shadow:none}
+.chapter-banner{height:100px;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative}
+.chapter-lock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);font-size:32px}
+.chapter-body{padding:16px}
+.chapter-name{font-size:16px;font-weight:700;margin-bottom:4px}
+.chapter-sub{font-size:12px;color:var(--muted);margin-bottom:10px}
+.chapter-progress{margin-bottom:8px}
+.prog-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px}
+.prog-bar{height:4px;background:#1a2540;border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--accent));border-radius:2px;transition:width .8s}
+.chapter-tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);color:var(--muted)}
+.unlock-hint{font-size:11px;color:var(--gold);margin-top:8px}
+
+/* ===== CHAPTER PAGE ===== */
+.chapter-page{padding:24px}
+.breadcrumb{display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:13px;color:var(--muted)}
+.breadcrumb a{color:var(--accent);cursor:pointer;text-decoration:none}
+.breadcrumb a:hover{text-decoration:underline}
+.city-tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.city-tab{padding:8px 16px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--muted);cursor:pointer;font-size:13px;transition:all .2s}
+.city-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.city-tab:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+.tasks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.task-card{
+  background:var(--bg3);border:1px solid var(--border);border-radius:12px;
+  padding:18px;cursor:pointer;transition:all .3s;
+}
+.task-card:hover{border-color:var(--accent);box-shadow:0 6px 20px rgba(74,158,255,.15);transform:translateY(-2px)}
+.task-card.done{border-color:var(--green);opacity:.8}
+.task-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.task-title{font-size:14px;font-weight:700;line-height:1.4;flex:1;margin-right:8px}
+.diff-badge{font-size:10px;padding:3px 8px;border-radius:10px;font-weight:700;flex-shrink:0}
+.d-easy{background:#0d2d0d;color:var(--green);border:1px solid var(--green)}
+.d-medium{background:#2d1f00;color:#ffaa33;border:1px solid #ffaa33}
+.d-hard{background:#2d0d0d;color:var(--red);border:1px solid var(--red)}
+.d-legend{background:#1a0a2a;color:#cc66ff;border:1px solid #cc66ff}
+.task-loc{font-size:12px;color:var(--muted);margin-bottom:10px}
+.task-rewards{display:flex;gap:8px}
+.rwd{font-size:11px;padding:3px 8px;border-radius:6px;background:var(--bg2)}
+.rwd-exp{color:var(--accent)}
+.rwd-medal{color:var(--gold)}
+.task-done-icon{font-size:20px;margin-top:8px}
+
+/* ===== TASK MODAL ===== */
+.task-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+.task-modal-overlay.show{opacity:1;pointer-events:all}
+.task-modal{
+  background:var(--bg3);border:1px solid var(--border);border-radius:20px;
+  width:90%;max-width:540px;max-height:85vh;overflow-y:auto;
+  transform:scale(.9);transition:transform .3s;
+}
+.task-modal-overlay.show .task-modal{transform:scale(1)}
+.task-modal::-webkit-scrollbar{width:4px}
+.task-modal::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.tm-banner{height:80px;display:flex;align-items:center;justify-content:center;font-size:40px;border-radius:20px 20px 0 0;background:linear-gradient(135deg,#1a2540,#0d1020)}
+.tm-body{padding:24px}
+.tm-title{font-size:20px;font-weight:800;margin-bottom:6px}
+.tm-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tm-tag{font-size:11px;padding:3px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);color:var(--muted)}
+.tm-section{margin-bottom:16px}
+.tm-section h4{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.tm-desc{font-size:14px;line-height:1.8;color:#bbc}
+.obj-list{list-style:none}
+.obj-list li{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.obj-list li:last-child{border-bottom:none}
+.obj-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0;margin-top:6px}
+.rewards-row{display:flex;gap:12px}
+.rwd-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-align:center;flex:1}
+.rwd-box-icon{font-size:24px;margin-bottom:4px}
+.rwd-box-label{font-size:11px;color:var(--muted)}
+.rwd-box-val{font-size:16px;font-weight:700;color:var(--accent);margin-top:2px}
+.medal-showcase{display:flex;flex-direction:column;align-items:center;background:linear-gradient(135deg,#1a1000,#0d0a20);border:2px solid var(--gold);border-radius:12px;padding:16px;margin-top:12px}
+.medal-showcase .mi{font-size:48px;margin-bottom:8px}
+.medal-showcase .mn{font-size:14px;font-weight:700;color:var(--gold)}
+.medal-showcase .md{font-size:12px;color:var(--muted);margin-top:4px}
+.complete-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all .3s;margin-top:16px;letter-spacing:.5px}
+.complete-btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(74,158,255,.4)}
+.complete-btn:disabled{background:#2a3a5e;color:#556;cursor:not-allowed;transform:none;box-shadow:none}
+.close-btn{width:100%;padding:10px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:10px;font-size:14px;cursor:pointer;margin-top:8px;transition:all .2s}
+.close-btn:hover{color:var(--text);border-color:var(--text)}
+
+/* ===== MEDALS PAGE ===== */
+.medals-page{padding:24px}
+.medals-page h2{font-size:22px;font-weight:800;margin-bottom:6px}
+.medals-page>p{color:var(--muted);margin-bottom:24px}
+.medals-filter{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.mf-btn{padding:6px 14px;border-radius:16px;border:1px solid var(--border);background:var(--bg3);color:var(--muted);cursor:pointer;font-size:12px;transition:all .2s}
+.mf-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.medals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.mc{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;transition:all .3s}
+.mc.earned{border-color:var(--gold);background:linear-gradient(135deg,#1a1200,#0f1028);cursor:default}
+.mc.earned:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(255,215,0,.2)}
+.mc.locked{opacity:.35;filter:grayscale(.8)}
+.mc .mi{font-size:32px;margin-bottom:8px}
+.mc .mn{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px}
+.mc .md{font-size:10px;color:var(--muted)}
+.mc.earned .mn{color:var(--gold)}
+.mc .ms{font-size:10px;margin-top:6px}
+
+/* ===== MINIGAMES PAGE ===== */
+.games-page{padding:24px}
+.games-page h2{font-size:22px;font-weight:800;margin-bottom:6px}
+.games-page>p{color:var(--muted);margin-bottom:24px}
+.games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:32px}
+.game-card{background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:24px;cursor:pointer;transition:all .3s;text-align:center}
+.game-card:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 10px 28px rgba(74,158,255,.2)}
+.game-icon{font-size:48px;margin-bottom:12px}
+.game-title{font-size:16px;font-weight:700;margin-bottom:6px}
+.game-desc{font-size:13px;color:var(--muted);line-height:1.6}
+.game-reward{margin-top:12px;font-size:12px;color:var(--accent);padding:4px 12px;border-radius:10px;background:var(--bg2);display:inline-block}
+
+/* Game panels */
+.game-panel{display:none;background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:600px;margin:0 auto}
+.game-panel.active{display:block;animation:fadeInUp .3s ease}
+.game-panel h3{font-size:18px;font-weight:800;margin-bottom:6px}
+.game-panel>p{color:var(--muted);margin-bottom:20px;font-size:13px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--muted);cursor:pointer;font-size:13px;margin-bottom:16px;transition:all .2s}
+.back-btn:hover{color:var(--text);border-color:var(--text)}
+
+/* ROULETTE */
+.roulette-wheel{
+  width:260px;height:260px;border-radius:50%;margin:0 auto 20px;
+  position:relative;overflow:hidden;border:4px solid var(--gold);
+  box-shadow:0 0 30px rgba(255,215,0,.3);transition:transform 4s cubic-bezier(.1,.7,.1,1);
+}
+.wheel-center{position:absolute;inset:50%;transform:translate(-50%,-50%);width:40px;height:40px;background:var(--bg);border-radius:50%;border:3px solid var(--gold);z-index:10;display:flex;align-items:center;justify-content:center;font-size:18px}
+.roulette-arrow{font-size:28px;text-align:center;margin-bottom:12px;color:var(--gold);text-shadow:0 0 10px var(--gold)}
+.roulette-btn{width:100%;padding:14px;background:linear-gradient(135deg,#ffd700,#ff9500);color:#000;border:none;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer;transition:all .3s}
+.roulette-btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(255,215,0,.4)}
+.roulette-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.roulette-result{text-align:center;padding:20px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-top:16px;display:none}
+.roulette-result.show{display:block;animation:fadeInUp .4s ease}
+.result-dest{font-size:24px;font-weight:800;color:var(--gold);margin-bottom:6px}
+.result-desc{font-size:14px;color:var(--muted)}
+.result-cta{margin-top:12px;padding:10px 24px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:all .3s}
+.result-cta:hover{transform:translateY(-2px)}
+
+/* QUIZ */
+.quiz-question{font-size:17px;font-weight:700;line-height:1.6;margin-bottom:20px;min-height:60px}
+.quiz-options{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.quiz-opt{padding:14px 18px;border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:14px;transition:all .2s;background:var(--bg2);text-align:left}
+.quiz-opt:hover:not(:disabled){border-color:var(--accent);background:#1a2540;transform:translateX(4px)}
+.quiz-opt.correct{border-color:var(--green);background:#0d2d0d;color:var(--green)}
+.quiz-opt.wrong{border-color:var(--red);background:#2d0d0d;color:var(--red)}
+.quiz-opt:disabled{cursor:not-allowed}
+.quiz-progress{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:12px}
+.quiz-exp-hint{font-size:13px;color:var(--accent);margin-bottom:16px}
+.quiz-feedback{padding:12px;border-radius:8px;margin-bottom:16px;display:none;font-size:14px}
+.quiz-feedback.show{display:block;animation:fadeInUp .3s ease}
+.quiz-feedback.ok{background:#0d2d0d;border:1px solid var(--green);color:var(--green)}
+.quiz-feedback.ng{background:#2d0d0d;border:1px solid var(--red);color:var(--red)}
+.quiz-next{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;display:none}
+.quiz-next.show{display:block}
+.quiz-score{text-align:center;padding:20px;display:none}
+.quiz-score.show{display:block;animation:fadeInUp .4s}
+.qs-icon{font-size:56px;margin-bottom:12px}
+.qs-title{font-size:22px;font-weight:800;margin-bottom:8px}
+.qs-exp{font-size:20px;color:var(--accent);font-weight:700;margin-bottom:8px}
+.qs-restart{margin-top:12px;padding:10px 24px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600}
+
+/* PACKING */
+.packing-setup{text-align:center}
+.dest-picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:20px}
+.dest-btn{padding:12px;border:1px solid var(--border);border-radius:10px;cursor:pointer;background:var(--bg2);transition:all .2s;text-align:center}
+.dest-btn:hover,.dest-btn.sel{border-color:var(--accent);background:#1a2540}
+.dest-btn .di{font-size:24px;margin-bottom:4px}
+.dest-btn .dn{font-size:12px;color:var(--text)}
+.packing-start{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px}
+.packing-start:disabled{background:#2a3a5e;color:#556;cursor:not-allowed}
+.packing-game{display:none}
+.packing-game.show{display:block}
+.items-pool{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;min-height:60px;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px}
+.pack-item{padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;font-size:13px;transition:all .2s;user-select:none}
+.pack-item:hover{border-color:var(--accent);background:#1a2540}
+.pack-item.selected{border-color:var(--green);background:#0d2d0d;color:var(--green)}
+.pack-item.wrong-pick{border-color:var(--red);background:#2d0d0d;color:var(--red);animation:shake .3s}
+.suitcase{min-height:80px;padding:12px;background:linear-gradient(135deg,#1a2540,#0d1020);border:2px dashed var(--border);border-radius:10px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+.packed-item{padding:5px 10px;border-radius:16px;background:var(--accent);color:#fff;font-size:12px}
+.pack-submit{width:100%;padding:12px;background:linear-gradient(135deg,var(--green),#1aaa6a);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer}
+.pack-result{padding:16px;border-radius:10px;margin-top:12px;display:none}
+.pack-result.show{display:block;animation:fadeInUp .3s}
+
+/* MATCH */
+.match-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.match-card{
+  aspect-ratio:1;background:linear-gradient(135deg,#1a2540,#0d1020);
+  border:1px solid var(--border);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;cursor:pointer;transition:all .3s;user-select:none;
+}
+.match-card:hover{border-color:var(--accent)}
+.match-card.flipped{background:var(--bg3);border-color:var(--accent)}
+.match-card.matched{background:linear-gradient(135deg,#0d2d0d,#1a4a1a);border-color:var(--green);cursor:default}
+.match-card.wrong-flash{border-color:var(--red);background:#2d0d0d}
+.match-info{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:12px}
+.match-restart{width:100%;padding:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;display:none}
+
+/* ===== ACHIEVEMENT MODAL ===== */
+.ach-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+.ach-overlay.show{opacity:1;pointer-events:all}
+.ach-modal{background:linear-gradient(135deg,var(--bg3),var(--bg2));border:2px solid var(--gold);border-radius:20px;padding:40px 32px;text-align:center;max-width:380px;width:90%;transform:scale(.85);transition:transform .3s}
+.ach-overlay.show .ach-modal{transform:scale(1)}
+.ach-icon{font-size:72px;margin-bottom:16px;animation:bounce .6s ease}
+.ach-title{font-size:20px;font-weight:800;color:var(--gold);margin-bottom:8px}
+.ach-sub{color:var(--muted);font-size:14px;margin-bottom:8px}
+.ach-exp{font-size:26px;font-weight:800;color:var(--accent);margin:12px 0}
+.ach-medal{font-size:15px;color:var(--gold);margin-bottom:16px}
+.ach-close{padding:12px 32px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer}
+
+/* ===== MISC ===== */
+@keyframes bounce{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.empty{text-align:center;padding:40px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">🌍 旅行者传说</div>
+  <div class="player-wrap">
+    <div class="avatar" id="avatarEl">✈️</div>
+    <div>
+      <div class="player-name">旅行者</div>
+      <div class="player-title" id="titleEl">初级背包客</div>
+    </div>
+  </div>
+  <div class="exp-wrap">
+    <div class="exp-row"><span>Lv.<span id="lvEl">1</span></span><span><span id="expEl">0</span>/<span id="expNEl">100</span> EXP</span></div>
+    <div class="exp-bar"><div class="exp-fill" id="expFill" style="width:0%"></div></div>
+  </div>
+  <div class="stats-row">
+    <div class="stat"><div class="stat-v" id="statTask">0</div><div class="stat-l">任务</div></div>
+    <div class="stat"><div class="stat-v" id="statMedal">0</div><div class="stat-l">勋章</div></div>
+    <div class="stat"><div class="stat-v" id="statCountry">0</div><div class="stat-l">国家</div></div>
+    <div class="stat"><div class="stat-v" id="statExp">0</div><div class="stat-l">总EXP</div></div>
+  </div>
+</div>
+
+<!-- MAINNAV -->
+<div class="mainnav">
+  <button class="navbtn active" onclick="gotoPage('world')">🗺️ 世界地图</button>
+  <button class="navbtn" onclick="gotoPage('medals')">🏅 勋章墙</button>
+  <button class="navbtn" onclick="gotoPage('games')">🎮 小游戏</button>
+</div>
+
+<!-- WORLD MAP PAGE -->
+<div class="page active" id="page-world">
+  <div class="world-page">
+    <div class="world-header">
+      <h2>🌍 世界地图</h2>
+      <p>选择一个大陆章节开始你的旅行冒险——完成任务解锁更多地区</p>
+    </div>
+    <div class="chapters-grid" id="chaptersGrid"></div>
+  </div>
+</div>
+
+<!-- CHAPTER PAGE -->
+<div class="page" id="page-chapter">
+  <div class="chapter-page">
+    <div class="breadcrumb">
+      <a onclick="gotoPage('world')">🌍 世界地图</a>
+      <span>›</span>
+      <span id="breadcrumbChapter">章节</span>
+    </div>
+    <div id="cityTabsEl" class="city-tabs"></div>
+    <div id="tasksGridEl" class="tasks-grid"></div>
+  </div>
+</div>
+
+<!-- MEDALS PAGE -->
+<div class="page" id="page-medals">
+  <div class="medals-page">
+    <h2>🏅 勋章收藏馆</h2>
+    <p>完成旅游任务和小游戏挑战，解锁你的专属旅行勋章</p>
+    <div class="medals-filter">
+      <button class="mf-btn active" onclick="filterMedals('all',this)">全部</button>
+      <button class="mf-btn" onclick="filterMedals('earned',this)">已获得</button>
+      <button class="mf-btn" onclick="filterMedals('locked',this)">未解锁</button>
+    </div>
+    <div class="medals-grid" id="medalsGrid"></div>
+  </div>
+</div>
+
+<!-- GAMES PAGE -->
+<div class="page" id="page-games">
+  <div class="games-page">
+    <h2>🎮 旅行小游戏</h2>
+    <p>在游戏中学习旅行知识，顺便赚取经验值！</p>
+    <div class="games-grid" id="gamesMenu">
+      <div class="game-card" onclick="openGame('roulette')">
+        <div class="game-icon">🎡</div>
+        <div class="game-title">假期轮盘</div>
+        <div class="game-desc">转动命运之轮，随机为你决定下一个旅行目的地！</div>
+        <div class="game-reward">🎲 每天可转3次</div>
+      </div>
+      <div class="game-card" onclick="openGame('quiz')">
+        <div class="game-icon">🧭</div>
+        <div class="game-title">旅行知识问答</div>
+        <div class="game-desc">测试你的全球地理和旅行文化知识，答对赢经验！</div>
+        <div class="game-reward">⚡ 每题 +10~30 EXP</div>
+      </div>
+      <div class="game-card" onclick="openGame('packing')">
+        <div class="game-icon">🧳</div>
+        <div class="game-title">行李打包挑战</div>
+        <div class="game-desc">针对不同目的地，快速打包必备物品，别带错了！</div>
+        <div class="game-reward">⚡ 完成 +80 EXP</div>
+      </div>
+      <div class="game-card" onclick="openGame('match')">
+        <div class="game-icon">🃏</div>
+        <div class="game-title">地标配对游戏</div>
+        <div class="game-desc">翻牌配对全球知名地标，考验你的地理记忆力！</div>
+        <div class="game-reward">⚡ 完成 +60 EXP</div>
+      </div>
+    </div>
+
+    <!-- ROULETTE -->
+    <div class="game-panel" id="game-roulette">
+      <button class="back-btn" onclick="closeGame()">← 返回游戏列表</button>
+      <h3>🎡 假期轮盘</h3>
+      <p>选好了假期但不知道去哪？让命运决定你的下一站！</p>
+      <div class="roulette-arrow">▼</div>
+      <div class="roulette-wheel" id="rouletteWheel"></div>
+      <div style="text-align:center;margin-bottom:16px;color:var(--muted);font-size:13px" id="rouletteCount">今日剩余：<span id="rouletteTimes">3</span> 次</div>
+      <button class="roulette-btn" id="rouletteBtn" onclick="spinRoulette()">🎲 转动命运之轮！</button>
+      <div class="roulette-result" id="rouletteResult">
+        <div class="result-dest" id="resultDest"></div>
+        <div id="resultFlags" style="font-size:28px;margin-bottom:8px"></div>
+        <div class="result-desc" id="resultDesc"></div>
+        <div style="font-size:13px;color:var(--accent);margin-top:8px" id="resultBest"></div>
+        <button class="result-cta" onclick="gotoPage('world')">查看相关任务 →</button>
+      </div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="game-panel" id="game-quiz">
+      <button class="back-btn" onclick="closeGame()">← 返回游戏列表</button>
+      <h3>🧭 旅行知识问答</h3>
+      <p>共10题，答对得经验，全部答完有额外奖励！</p>
+      <div class="quiz-score" id="quizScore">
+        <div class="qs-icon" id="qsIcon"></div>
+        <div class="qs-title" id="qsTitle"></div>
+        <div class="qs-exp" id="qsExp"></div>
+        <div style="color:var(--muted);font-size:13px" id="qsDetail"></div>
+        <button class="qs-restart" onclick="startQuiz()">再来一轮 🔄</button>
+      </div>
+      <div id="quizMain">
+        <div class="quiz-progress"><span>第 <span id="qNum">1</span> / 10 题</span><span>得分：<span id="qScore">0</span></span></div>
+        <div class="quiz-exp-hint" id="qExpHint">答对得 +20 EXP</div>
+        <div class="quiz-question" id="qQuestion"></div>
+        <div class="quiz-options" id="qOptions"></div>
+        <div class="quiz-feedback" id="qFeedback"></div>
+        <button class="quiz-next" id="qNext" onclick="nextQuestion()">下一题 →</button>
+      </div>
+    </div>
+
+    <!-- PACKING -->
+    <div class="game-panel" id="game-packing">
+      <button class="back-btn" onclick="closeGame()">← 返回游戏列表</button>
+      <h3>🧳 行李打包挑战</h3>
+      <p>选择目的地，从物品池中挑选最合适的行李！</p>
+      <div class="packing-setup" id="packingSetup">
+        <div style="font-size:14px;color:var(--muted);margin-bottom:12px;text-align:left">选择旅行目的地：</div>
+        <div class="dest-picker" id="destPicker"></div>
+        <button class="packing-start" id="packingStartBtn" onclick="startPacking()" disabled>开始打包 🎒</button>
+      </div>
+      <div class="packing-game" id="packingGame">
+        <div style="font-size:15px;font-weight:700;margin-bottom:6px" id="packDestTitle"></div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px" id="packInstructions"></div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">🎒 你的行李箱</div>
+        <div class="suitcase" id="suitcase"></div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">点击物品加入行李箱：</div>
+        <div class="items-pool" id="itemsPool"></div>
+        <button class="pack-submit" onclick="submitPacking()">提交行李 ✈️</button>
+        <div class="pack-result" id="packResult"></div>
+      </div>
+    </div>
+
+    <!-- MATCH -->
+    <div class="game-panel" id="game-match">
+      <button class="back-btn" onclick="closeGame()">← 返回游戏列表</button>
+      <h3>🃏 地标配对游戏</h3>
+      <p>翻牌配对，找出8对全球知名地标！</p>
+      <div class="match-info"><span>翻牌次数：<span id="matchFlips">0</span></span><span>已配对：<span id="matchMatched">0</span>/8</span><span id="matchTimer">⏱️ 0s</span></div>
+      <div class="match-grid" id="matchGrid"></div>
+      <button class="match-restart" id="matchRestart" onclick="initMatch()">再来一局 🔄</button>
+    </div>
+  </div>
+</div>
+
+<!-- TASK MODAL -->
+<div class="task-modal-overlay" id="taskModalOverlay" onclick="closeTaskModal(event)">
+  <div class="task-modal" id="taskModal"></div>
+</div>
+
+<!-- ACHIEVEMENT MODAL -->
+<div class="ach-overlay" id="achOverlay">
+  <div class="ach-modal">
+    <div class="ach-icon" id="achIcon"></div>
+    <div class="ach-title" id="achTitle"></div>
+    <div class="ach-sub" id="achSub"></div>
+    <div class="ach-exp" id="achExp"></div>
+    <div class="ach-medal" id="achMedal"></div>
+    <button class="ach-close" onclick="closeAch()">继续冒险 ✨</button>
+  </div>
+</div>
+
+<script>
+// ===================== DATA =====================
+const CHAPTERS = [
+  {
+    id:'japan', name:'🇯🇵 日本', subtitle:'樱花、抹茶、神社与温泉', emoji:'🗾',
+    bg:'linear-gradient(135deg,#2d1a0a,#1a0a20)', unlockExp:0,
+    cities:['东京','大阪·京都','奈良·宇治','其他'],
+    tags:['免签申请','樱花季','古都文化'],
+    description:'从东京的现代繁华到京都的千年古都，从富士山的壮丽到奈良的神鹿，日本是旅行者传说的第一章。'
+  },
+  {
+    id:'korea', name:'🇰🇷 韩国', subtitle:'首尔、济州与海边风光', emoji:'🏝️',
+    bg:'linear-gradient(135deg,#0a1a2d,#1a0a20)', unlockExp:0,
+    cities:['首尔','济州岛','釜山','庆州'],
+    tags:['免签','海岛自驾','夜市美食'],
+    description:'从首尔的都市热浪到济州岛的蔚蓝海岸，从牛岛的透明海水到城山日出峰的壮阔日出。'
+  },
+  {
+    id:'seasia', name:'🌴 东南亚', subtitle:'新马泰印的热带风情', emoji:'🌺',
+    bg:'linear-gradient(135deg,#0a2d1a,#1a200a)', unlockExp:0,
+    cities:['新加坡','马来西亚','泰国','巴厘岛'],
+    tags:['热带气候','美食天堂','免签友好'],
+    description:'热带阳光、多元文化、无处不在的街头美食，东南亚是最适合第一次出国的旅行目的地。'
+  },
+  {
+    id:'china', name:'🇨🇳 中国', subtitle:'壮阔山河与人文古迹', emoji:'🏯',
+    bg:'linear-gradient(135deg,#2d0a0a,#1a1a0a)', unlockExp:0,
+    cities:['武汉·宜昌','香港','西藏','云南'],
+    tags:['高铁旅行','山水风光','文化遗产'],
+    description:'从三峡的壮阔到西藏的神秘，从香港的都市到云南的彩云之南，中国的每个角落都是一部史诗。'
+  },
+  {
+    id:'europe', name:'🇪🇺 欧洲', subtitle:'古堡、艺术与浪漫之旅', emoji:'🏰',
+    bg:'linear-gradient(135deg,#0a0a2d,#200a1a)', unlockExp:300,
+    cities:['法国·巴黎','意大利','西班牙','东欧'],
+    tags:['签证申根','文艺之旅','历史古迹'],
+    description:'埃菲尔铁塔的金色灯光，罗马竞技场的千年沧桑，地中海的碧蓝海岸，欧洲在等待有准备的旅行者。'
+  },
+  {
+    id:'americas', name:'🌎 美洲', subtitle:'自然奇观与多元文明', emoji:'🗽',
+    bg:'linear-gradient(135deg,#1a0a2d,#0a1a1a)', unlockExp:600,
+    cities:['美国','墨西哥','秘鲁','巴西'],
+    tags:['长途飞行','大陆探险','自然奇观'],
+    description:'从纽约的摩天大楼到亚马逊的热带雨林，从马丘比丘的云端古城到科罗拉多大峡谷的地质奇迹。'
+  }
+];
+
+const TASKS = {
+  japan:[
+    {id:'jp1',city:'东京',name:'在涩谷十字路口打卡',difficulty:'easy',country:'日本',
+     desc:'涩谷十字路口是全球最繁忙的斑马线，人潮汹涌时一次可过500人。站在路口中央，感受东京速度。',
+     objectives:['在绿灯时走过涩谷十字路口','在忠犬八公像前拍照','爬上涩谷天空展望台看俯瞰图'],
+     exp:70,medal:{id:'shibuya',icon:'🚦',name:'涩谷交叉口',desc:'穿越最繁忙的十字路口'}},
+    {id:'jp2',city:'东京',name:'在筑地场外市场吃早餐',difficulty:'easy',country:'日本',
+     desc:'筑地场外市场是东京美食的天花板，天刚亮就开始热闹。吃一碗现剖金枪鱼丼或新鲜牡蛎，感受东京最真实的一面。',
+     objectives:['清晨6点前抵达场外市场','品尝金枪鱼丼或海鲜','在玉子烧摊位购买现做玉子烧'],
+     exp:80,medal:{id:'tsukiji',icon:'🐟',name:'筑地美食家',desc:'品尝东京最鲜的海鲜'}},
+    {id:'jp3',city:'大阪·京都',name:'在道顿堀吃章鱼烧',difficulty:'easy',country:'日本',
+     desc:'大阪道顿堀是美食的圣地，固力果跑跑人看板是必打卡地标，现做的章鱼烧是大阪灵魂。',
+     objectives:['固力果看板前打卡📸','品尝现做章鱼烧','在戎桥拍夜景'],
+     exp:80,medal:{id:'takoyaki',icon:'🐙',name:'章鱼烧达人',desc:'品尝大阪灵魂美食'}},
+    {id:'jp4',city:'大阪·京都',name:'在伏见稻荷爬完全部鸟居',difficulty:'medium',country:'日本',
+     desc:'伏见稻荷大社有上万座朱红色鸟居绵延山顶，是京都最具代表性的景点。爬到山顶需要约2小时，但鸟居隧道的震撼无可比拟。',
+     objectives:['拍摄千本鸟居入口📸','一路爬到稻荷山顶（233m）','在山顶稻荷大神处参拜'],
+     exp:200,medal:{id:'fushimi',icon:'⛩️',name:'千本鸟居行者',desc:'穿越万座鸟居登顶稻荷山'}},
+    {id:'jp5',city:'奈良·宇治',name:'在奈良公园喂鹿',difficulty:'easy',country:'日本',
+     desc:'奈良公园有约1200头自由漫步的梅花鹿，被视为神使。买一包鹿饼，向鹿鞠躬，它们会还礼！',
+     objectives:['购买鹿饼与鹿互动','在东大寺大佛前打卡','拍摄鹿与古建筑合影📸'],
+     exp:90,medal:{id:'nara-deer',icon:'🦌',name:'奈良鹿友',desc:'与会鞠躬的神鹿交朋友'}},
+    {id:'jp6',city:'奈良·宇治',name:'在宇治喝一杯抹茶',difficulty:'easy',country:'日本',
+     desc:'宇治是抹茶的发源地，平等院凤凰堂印在10日元硬币上。来一杯宇治抹茶拿铁，配上和菓子，是日式美学的完整体验。',
+     objectives:['参观平等院凤凰堂','品尝辻利或中村藤吉抹茶甜品','在宇治川旁散步📸'],
+     exp:80,medal:{id:'matcha',icon:'🍵',name:'抹茶鉴赏家',desc:'追溯抹茶文化源头'}},
+    {id:'jp7',city:'其他',name:'登上富士山山顶',difficulty:'hard',country:'日本',
+     desc:'挑战日本最高峰富士山（3776m）。从吉田口五合目出发，穿越云层，在日出时分站上山顶，俯瞰壮阔日本大地。',
+     objectives:['从五合目出发徒步登山','到达剑峰顶点（3776m）','完成御来光（山顶日出）观赏'],
+     exp:350,medal:{id:'fuji',icon:'🗻',name:'富士登顶者',desc:'征服日本最高峰'}},
+    {id:'jp8',city:'其他',name:'乘嵯峨野观光小火车',difficulty:'medium',country:'日本',
+     desc:'嵯峨野观光铁道沿保津川缓缓穿越竹林与峡谷，车速极慢，每个弯道都是一幅画。',
+     objectives:['在龟冈站或嵯峨站上车','穿越竹林段拍照📸','抵达终点站完成全程'],
+     exp:150,medal:{id:'sagano',icon:'🚂',name:'嵯峨野旅人',desc:'乘坐日本最美观光小火车'}}
+  ],
+  korea:[
+    {id:'kr1',city:'首尔',name:'爬上首尔南山N塔',difficulty:'easy',country:'韩国',
+     desc:'南山是首尔的制高点，N首尔塔俯瞰整个汉城盆地。挂上爱情锁，看首尔夜景，是最经典的首尔打卡。',
+     objectives:['徒步或乘缆车上南山','在爱情锁栏杆前打卡','观赏首尔360°夜景📸'],
+     exp:100,medal:{id:'n-tower',icon:'🗼',name:'首尔守望者',desc:'俯瞰千年古都夜景'}},
+    {id:'kr2',city:'首尔',name:'在广藏市场吃韩式美食',difficulty:'easy',country:'韩国',
+     desc:'广藏市场是首尔最古老的传统市场，生拌牛肉、绿豆煎饼、紫菜包饭——一条街吃遍韩式传统小吃。',
+     objectives:['品尝生拌牛肉（yukhoe）','吃绿豆煎饼（bindaetteok）','在市场内转满一圈'],
+     exp:70,medal:{id:'gwangjang',icon:'🥩',name:'广藏市场吃货',desc:'征服首尔最老传统市场'}},
+    {id:'kr3',city:'济州岛',name:'游览济州岛牛岛',difficulty:'easy',country:'韩国',
+     desc:'从城山港乘渡轮15分钟即达牛岛，透明蓝绿色海水令人窒息。牛岛花生冰淇淋是必吃当地名物。',
+     objectives:['从城山港乘渡轮到牛岛','品尝牛岛花生冰淇淋','拍摄牛岛海岸全景📸'],
+     exp:100,medal:{id:'udo',icon:'🏝️',name:'牛岛探险家',desc:'发现济州最美离岛'}},
+    {id:'kr4',city:'济州岛',name:'登上城山日出峰看日出',difficulty:'medium',country:'韩国',
+     desc:'城山日出峰是世界自然遗产，凌晨爬上这座形似古城的火山口，等待日出从大海升起，是济州最史诗级的体验。',
+     objectives:['凌晨4:30出发上山','在火山口边等待日出','日出后下山逛渔村市场'],
+     exp:180,medal:{id:'sunrise-peak',icon:'🌅',name:'城山追日者',desc:'在世遗火山口等候日出'}},
+    {id:'kr5',city:'釜山',name:'在甘川文化村打卡',difficulty:'easy',country:'韩国',
+     desc:'甘川文化村是釜山的"马丘比丘"，五彩斑斓的房屋层叠在山坡上，弯弯曲曲的小巷里藏着无数艺术装置。',
+     objectives:['找到小王子雕像打卡📸','沿指示牌游览全村','购买一份手绘地图留念'],
+     exp:90,medal:{id:'gamcheon',icon:'🎨',name:'甘川艺术探索者',desc:'发现釜山最美彩色山城'}},
+    {id:'kr6',city:'庆州',name:'骑车游览庆州古墓群',difficulty:'medium',country:'韩国',
+     desc:'庆州是韩国的"西安"，新罗王朝的千年古都。骑着自行车穿梭在巨大圆形古墓群之间，是最接近历史的方式。',
+     objectives:['租自行车或电动车','绕大陵苑古墓群一圈','在石窟庵或佛国寺拍照📸'],
+     exp:160,medal:{id:'gyeongju',icon:'🏛️',name:'新罗遗迹探访者',desc:'骑游千年古都庆州'}}
+  ],
+  seasia:[
+    {id:'sg1',city:'新加坡',name:'漫步滨海湾花园看夜间灯光秀',difficulty:'easy',country:'新加坡',
+     desc:'Gardens by the Bay的超级树夜间灯光秀Garden Rhapsody是免费的，配合音乐的灯光变幻让人忘记时间。',
+     objectives:['游览花穹或云雾林温室','观看超级树夜间灯光秀','在滨海湾金沙外景拍照📸'],
+     exp:120,medal:{id:'sg-garden',icon:'🌳',name:'花园城市居民',desc:'探索新加坡未来花园'}},
+    {id:'sg2',city:'新加坡',name:'在牛车水找到最地道的肉骨茶',difficulty:'easy',country:'新加坡',
+     desc:'牛车水（Chinatown）是新加坡华人文化的根，福建式肉骨茶加上白饭，是最接地气的新加坡早餐体验。',
+     objectives:['在牛车水找一家本地肉骨茶店','完整吃完一套肉骨茶+油条','在牛车水庙宇前打卡'],
+     exp:80,medal:{id:'bak-kut-teh',icon:'🍖',name:'肉骨茶鉴赏家',desc:'在华人古街品尝南洋精髓'}},
+    {id:'my1',city:'马来西亚',name:'在马六甲骑三轮车逛鸡场街',difficulty:'easy',country:'马来西亚',
+     desc:'马六甲是世界遗产古城，装饰华丽的三轮车是最当地的游览方式，鸡场街的娘惹美食和古董店让时光倒流。',
+     objectives:['在荷兰红屋广场打卡📸','乘坐三轮车游鸡场街','品尝娘惹菜或鸡饭粒'],
+     exp:90,medal:{id:'malacca',icon:'🚲',name:'古城探索者',desc:'游历南洋风情古城'}},
+    {id:'my2',city:'马来西亚',name:'登上吉隆坡双子塔',difficulty:'medium',country:'马来西亚',
+     desc:'高452米的双子塔曾是世界第一高楼，登顶观景台可以俯瞰整个KL，41层的天桥是最佳拍照点。',
+     objectives:['购买双子塔登顶门票','参观41层空中走廊','在顶层观景台留念📸'],
+     exp:180,medal:{id:'klcc',icon:'🏙️',name:'双塔之顶',desc:'征服世界最高双子楼'}},
+    {id:'th1',city:'泰国',name:'在清迈放天灯',difficulty:'medium',country:'泰国',
+     desc:'清迈水灯节（Yi Peng）是世界最美节日之一，无数孔明灯同时升空，整片夜空都变成了星河。',
+     objectives:['参加Yi Peng或类似天灯活动','亲手放飞一盏天灯','拍摄天灯升空瞬间📸'],
+     exp:220,medal:{id:'lantern',icon:'🏮',name:'清迈天灯放飞者',desc:'在星空下放飞心愿天灯'}},
+    {id:'id1',city:'巴厘岛',name:'在乌鲁瓦图看日落火舞',difficulty:'medium',country:'印度尼西亚',
+     desc:'乌鲁瓦图悬崖神庙海拔70米，是巴厘岛观日落的最佳地点。配合传统克差火舞，是整个巴厘岛最震撼的黄昏。',
+     objectives:['抵达乌鲁瓦图悬崖神庙','观看克差火舞表演','在崖边拍摄日落全景📸'],
+     exp:200,medal:{id:'bali-sunset',icon:'🌅',name:'巴厘日落猎人',desc:'在印度洋上追逐完美落日'}}
+  ],
+  china:[
+    {id:'cn1',city:'武汉·宜昌',name:'乘船过葛洲坝船闸',difficulty:'medium',country:'中国',
+     desc:'参加两坝一峡一日游，亲历游轮从三斗坪缓缓驶过葛洲坝五级船闸，水落船降的过程需要约1小时，震撼无比。',
+     objectives:['乘坐三峡系列游轮出发','穿越西陵峡欣赏峡谷风光','亲历葛洲坝船闸水位变化'],
+     exp:160,medal:{id:'gezhouba',icon:'⚓',name:'三峡航行者',desc:'穿越长江第一坝'}},
+    {id:'cn2',city:'武汉·宜昌',name:'站上三峡大坝坛子岭',difficulty:'easy',country:'中国',
+     desc:'三峡大坝是世界最大水电站。坛子岭是观看大坝的最佳位置，鸟瞰五级船闸和壮阔高峡平湖，感受中国工程奇迹。',
+     objectives:['乘电梯到坛子岭顶','俯瞰三峡大坝全貌📸','参观185观景平台感受"截断巫山云雨"'],
+     exp:130,medal:{id:'dam',icon:'🏗️',name:'三峡大坝见证者',desc:'站上世界最大水电站观景台'}},
+    {id:'cn3',city:'香港',name:'徒步麦理浩径第二段全程',difficulty:'hard',country:'中国香港',
+     desc:'从万宜水库东坝出发，穿越浪茄湾、西湾山顶，抵达咸田湾，最后趟水登船回西贡。全程约13-15公里，是香港最壮美的徒步路线。',
+     objectives:['从东坝出发徒步','爬上西湾山顶（最难段）','抵达咸田湾趟水登船📸'],
+     exp:300,medal:{id:'maclehose',icon:'⛰️',name:'麦径勇士',desc:'完成香港最美徒步路线'}},
+    {id:'cn4',city:'西藏',name:'在拉萨转动八廓街转经筒',difficulty:'legendary',country:'中国',
+     desc:'海拔3650米的拉萨，随朝圣者顺时针转动八廓街转经筒，感受藏传佛教最圣洁的朝圣之路，是一生必做的事。',
+     objectives:['办理西藏旅游许可证','顺时针绕八廓街一圈','在大昭寺前与朝圣者合影📸'],
+     exp:500,medal:{id:'lhasa',icon:'🏔️',name:'雪域行者',desc:'踏上世界屋脊朝圣之路'}},
+    {id:'cn5',city:'云南',name:'在大理古城看苍山洱海日落',difficulty:'easy',country:'中国',
+     desc:'大理古城与苍山洱海构成了中国最美的古城风景之一。骑车环洱海，在某个小渔村等待日落，是岁月静好的真实样本。',
+     objectives:['骑车环洱海一段','在洱海边拍摄苍山倒影📸','在大理古城品尝乳扇和玫瑰糕'],
+     exp:140,medal:{id:'dali',icon:'🌊',name:'苍山洱海行者',desc:'骑游大理最美湖光山色'}}
+  ],
+  europe:[
+    {id:'eu1',city:'法国·巴黎',name:'在埃菲尔铁塔下许愿',difficulty:'medium',country:'法国',
+     desc:'巴黎的象征，无论白天还是夜晚都美得令人窒息。夜间每小时整点的闪光灯表演持续5分钟，是必等的浪漫时刻。',
+     objectives:['白天在铁塔下拍照📸','等到整点欣赏灯光秀','登上铁塔第二层俯瞰巴黎'],
+     exp:200,medal:{id:'eiffel',icon:'🗼',name:'巴黎铁塔见证者',desc:'在浪漫之城许下心愿'}},
+    {id:'eu2',city:'意大利',name:'在罗马竞技场感受历史',difficulty:'medium',country:'意大利',
+     desc:'斗兽场矗立了近2000年，站在这里你能感受到整个罗马帝国的重量。周边的罗马广场是免费的历史露天博物馆。',
+     objectives:['入场参观竞技场内部','在罗马广场漫步','品尝传统罗马冰淇淋（gelato）'],
+     exp:220,medal:{id:'colosseum',icon:'🏛️',name:'罗马帝国访客',desc:'踏入2000年历史的斗兽场'}},
+    {id:'eu3',city:'西班牙',name:'在巴塞罗那看高迪建筑',difficulty:'medium',country:'西班牙',
+     desc:'圣家族大教堂是建了140年还没完工的奇迹，充满高迪天马行空的想象力。从外观到内部，每个细节都值得细看。',
+     objectives:['参观圣家族大教堂（需提前预约）','游览奎尔公园📸','在兰布拉大道享用西班牙海鲜饭'],
+     exp:210,medal:{id:'sagrada',icon:'⛪',name:'高迪幻想游客',desc:'探索建了百年的疯狂大教堂'}}
+  ],
+  americas:[
+    {id:'us1',city:'美国',name:'在纽约时代广场跨年',difficulty:'hard',country:'美国',
+     desc:'纽约时代广场跨年是全球最著名的跨年倒计时，数十万人聚集，水晶球缓缓降落，是人类最大的共同仪式之一。',
+     objectives:['提前6小时占据好位置','完整观看水晶球降落仪式','在时代广场霓虹灯下留影📸'],
+     exp:380,medal:{id:'times-sq',icon:'🎆',name:'时代广场跨年者',desc:'参与全球最大跨年倒计时'}},
+    {id:'pe1',city:'秘鲁',name:'登上马丘比丘观日出',difficulty:'legendary',country:'秘鲁',
+     desc:'云雾缭绕中的印加失落之城，海拔2430米。凌晨爬上太阳门等候日出从马丘比丘后山升起，是旅行者传说的终极成就。',
+     objectives:['持马丘比丘入场券','凌晨攀登太阳门等日出','在经典观景台拍摄全景📸'],
+     exp:600,medal:{id:'machu',icon:'🏔️',name:'马丘比丘朝圣者',desc:'登上印加失落之城的巅峰'}}
+  ]
+};
+
+const ALL_MEDALS = Object.values(TASKS).flat().map(t=>t.medal);
+ALL_MEDALS.push(
+  {id:'quiz-master',icon:'🧭',name:'旅行知识达人',desc:'问答全部答对'},
+  {id:'packing-pro',icon:'🧳',name:'打包专家',desc:'完美完成行李打包'},
+  {id:'match-speed',icon:'⚡',name:'地标闪电手',desc:'60秒内完成配对'}
+);
+
+// ===================== STATE =====================
+let S = JSON.parse(localStorage.getItem('travelrpg2') || '{"exp":0,"completed":[],"medals":[]}');
+function save(){localStorage.setItem('travelrpg2',JSON.stringify(S))}
+
+const LEVELS=[
+  {lv:1,title:'初级背包客',need:100},
+  {lv:2,title:'资深旅行者',need:250},
+  {lv:3,title:'环球探险家',need:500},
+  {lv:4,title:'世界漫游者',need:900},
+  {lv:5,title:'传奇旅行家',need:1500},
+  {lv:6,title:'地球行者',need:2500},
+  {lv:7,title:'宇宙旅人',need:99999}
+];
+function levelInfo(exp){
+  let rem=exp;
+  for(const l of LEVELS){if(rem<l.need)return{...l,cur:rem};rem-=l.need}
+  return{...LEVELS[LEVELS.length-1],cur:rem}
+}
+
+function updateHUD(){
+  const li=levelInfo(S.exp);
+  document.getElementById('lvEl').textContent=li.lv;
+  document.getElementById('titleEl').textContent=li.title;
+  document.getElementById('expEl').textContent=li.cur;
+  document.getElementById('expNEl').textContent=li.need;
+  document.getElementById('expFill').style.width=Math.min(100,li.cur/li.need*100)+'%';
+  document.getElementById('statExp').textContent=S.exp;
+  document.getElementById('statTask').textContent=S.completed.length;
+  document.getElementById('statMedal').textContent=S.medals.length;
+  const cs=new Set(Object.values(TASKS).flat().filter(t=>S.completed.includes(t.id)).map(t=>t.country));
+  document.getElementById('statCountry').textContent=cs.size;
+  const avatars=['✈️','🌍','🗺️','🧳','🏅','🌟','👑'];
+  document.getElementById('avatarEl').textContent=avatars[Math.min(li.lv-1,avatars.length-1)];
+}
+
+// ===================== PAGE NAV =====================
+function gotoPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.navbtn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const map={world:0,medals:1,games:2};
+  document.querySelectorAll('.navbtn')[map[p]||0].classList.add('active');
+  if(p==='world')renderChapters();
+  if(p==='medals')renderMedals();
+  if(p==='games'){closeGame();renderGames()}
+}
+
+// ===================== CHAPTERS =====================
+function renderChapters(){
+  const el=document.getElementById('chaptersGrid');
+  el.innerHTML=CHAPTERS.map(ch=>{
+    const tasks=TASKS[ch.id]||[];
+    const done=tasks.filter(t=>S.completed.includes(t.id)).length;
+    const pct=tasks.length?done/tasks.length*100:0;
+    const locked=S.exp<ch.unlockExp;
+    return`<div class="chapter-card${locked?' locked':''}" onclick="${locked?`showLockHint(${ch.unlockExp})`:`openChapter('${ch.id}')`}">
+      <div class="chapter-banner" style="background:${ch.bg}">${ch.emoji}
+        ${locked?`<div class="chapter-lock">🔒</div>`:''}
+      </div>
+      <div class="chapter-body">
+        <div class="chapter-name">${ch.name}</div>
+        <div class="chapter-sub">${ch.subtitle}</div>
+        <div class="chapter-progress">
+          <div class="prog-label"><span>任务进度</span><span>${done}/${tasks.length}</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div class="chapter-tags">${ch.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        ${locked?`<div class="unlock-hint">🔒 需要 ${ch.unlockExp} EXP 解锁</div>`:''}
+      </div>
+    </div>`
+  }).join('');
+}
+function showLockHint(need){alert(`需要累计 ${need} EXP 才能解锁此章节！继续完成任务积累经验吧 💪`)}
+
+let currentChapter=null;
+let currentCity=null;
+function openChapter(id){
+  currentChapter=id;
+  const ch=CHAPTERS.find(c=>c.id===id);
+  document.getElementById('breadcrumbChapter').textContent=ch.name;
+  currentCity=ch.cities[0];
+  renderCityTabs(ch);
+  renderTasksGrid(id,currentCity);
+  gotoPageDirect('chapter');
+}
+function gotoPageDirect(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+}
+function renderCityTabs(ch){
+  document.getElementById('cityTabsEl').innerHTML=ch.cities.map(c=>
+    `<div class="city-tab${c===currentCity?' active':''}" onclick="switchCity('${c}')">${c}</div>`
+  ).join('');
+}
+function switchCity(city){
+  currentCity=city;
+  const ch=CHAPTERS.find(c=>c.id===currentChapter);
+  renderCityTabs(ch);
+  renderTasksGrid(currentChapter,city);
+}
+function renderTasksGrid(chId,city){
+  const tasks=(TASKS[chId]||[]).filter(t=>t.city===city);
+  const diffMap={easy:'简单',medium:'中等',hard:'困难',legendary:'传说'};
+  document.getElementById('tasksGridEl').innerHTML=tasks.length?tasks.map(t=>{
+    const done=S.completed.includes(t.id);
+    return`<div class="task-card${done?' done':''}" onclick="openTaskModal('${t.id}')">
+      <div class="task-top">
+        <div class="task-title">${t.name}</div>
+        <div class="diff-badge d-${t.difficulty}">${diffMap[t.difficulty]}</div>
+      </div>
+      <div class="task-loc">📍 ${t.city} · ${t.country}</div>
+      <div class="task-rewards">
+        <span class="rwd rwd-exp">⚡ +${t.exp}</span>
+        <span class="rwd rwd-medal">🏅 ${t.medal.name}</span>
+      </div>
+      ${done?'<div class="task-done-icon">✅ 已完成</div>':''}
+    </div>`
+  }).join(''):`<div class="empty">📭 此城市暂无任务</div>`;
+}
+
+// ===================== TASK MODAL =====================
+function findTask(id){return Object.values(TASKS).flat().find(t=>t.id===id)}
+function openTaskModal(id){
+  const t=findTask(id);const done=S.completed.includes(id);
+  const diffMap={easy:'⭐ 简单',medium:'⭐⭐ 中等',hard:'⭐⭐⭐ 困难',legendary:'👑 传说'};
+  document.getElementById('taskModal').innerHTML=`
+    <div class="tm-banner">${t.medal.icon}</div>
+    <div class="tm-body">
+      <div class="tm-title">${t.name}</div>
+      <div class="tm-meta">
+        <span class="tm-tag">📍 ${t.city}</span>
+        <span class="tm-tag">${diffMap[t.difficulty]}</span>
+        <span class="tm-tag">${t.country}</span>
+        ${done?'<span class="tm-tag" style="color:var(--green);border-color:var(--green)">✅ 已完成</span>':''}
+      </div>
+      <div class="tm-section"><h4>📖 任务简介</h4><p class="tm-desc">${t.desc}</p></div>
+      <div class="tm-section"><h4>🎯 完成目标</h4>
+        <ul class="obj-list">${t.objectives.map(o=>`<li><div class="obj-dot"></div>${o}</li>`).join('')}</ul>
+      </div>
+      <div class="tm-section"><h4>🎁 完成奖励</h4>
+        <div class="rewards-row">
+          <div class="rwd-box"><div class="rwd-box-icon">⚡</div><div class="rwd-box-label">经验值</div><div class="rwd-box-val">+${t.exp}</div></div>
+          <div class="rwd-box"><div class="rwd-box-icon">🏅</div><div class="rwd-box-label">专属勋章</div><div class="rwd-box-val" style="font-size:13px">${t.medal.name}</div></div>
+        </div>
+        <div class="medal-showcase"><div class="mi">${t.medal.icon}</div><div class="mn">${t.medal.name}</div><div class="md">${t.medal.desc}</div></div>
+      </div>
+      <button class="complete-btn" ${done?'disabled':''} onclick="completeTask('${t.id}')">
+        ${done?'✅ 任务已完成':'🎯 完成此任务，获得奖励！'}
+      </button>
+      <button class="close-btn" onclick="closeTaskModal()">关闭</button>
+    </div>`;
+  document.getElementById('taskModalOverlay').classList.add('show');
+}
+function closeTaskModal(e){
+  if(!e||e.target===document.getElementById('taskModalOverlay'))
+    document.getElementById('taskModalOverlay').classList.remove('show');
+}
+function completeTask(id){
+  if(S.completed.includes(id))return;
+  const t=findTask(id);
+  S.completed.push(id);S.exp+=t.exp;
+  if(!S.medals.includes(t.medal.id))S.medals.push(t.medal.id);
+  save();updateHUD();
+  closeTaskModal();
+  if(currentChapter)renderTasksGrid(currentChapter,currentCity);
+  showAch(t.medal.icon,'任务完成！',`「${t.name}」`,t.exp,'🏅 获得勋章：'+t.medal.name);
+}
+function showAch(icon,title,sub,exp,medal){
+  document.getElementById('achIcon').textContent=icon;
+  document.getElementById('achTitle').textContent=title;
+  document.getElementById('achSub').textContent=sub;
+  document.getElementById('achExp').textContent=`+${exp} EXP ⚡`;
+  document.getElementById('achMedal').textContent=medal||'';
+  document.getElementById('achOverlay').classList.add('show');
+}
+function closeAch(){document.getElementById('achOverlay').classList.remove('show')}
+
+// ===================== MEDALS =====================
+let medalFilter='all';
+function filterMedals(f,el){
+  medalFilter=f;
+  document.querySelectorAll('.mf-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderMedals();
+}
+function renderMedals(){
+  let medals=ALL_MEDALS;
+  if(medalFilter==='earned')medals=medals.filter(m=>S.medals.includes(m.id));
+  if(medalFilter==='locked')medals=medals.filter(m=>!S.medals.includes(m.id));
+  const earned=medals.filter(m=>S.medals.includes(m.id));
+  const locked=medals.filter(m=>!S.medals.includes(m.id));
+  document.getElementById('medalsGrid').innerHTML=
+    [...earned,...locked].map(m=>{
+      const e=S.medals.includes(m.id);
+      return`<div class="mc ${e?'earned':'locked'}">
+        <div class="mi">${m.icon}</div>
+        <div class="mn">${m.name}</div>
+        <div class="md">${e?m.desc:'未解锁'}</div>
+        ${e?'<div class="ms" style="color:var(--green)">✅ 已获得</div>':''}
+      </div>`
+    }).join('');
+}
+
+// ===================== GAMES =====================
+function renderGames(){document.getElementById('gamesMenu').style.display='grid'}
+function openGame(g){
+  document.getElementById('gamesMenu').style.display='none';
+  document.querySelectorAll('.game-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('game-'+g).classList.add('active');
+  if(g==='roulette')initRoulette();
+  if(g==='quiz')startQuiz();
+  if(g==='packing')initPacking();
+  if(g==='match')initMatch();
+}
+function closeGame(){
+  document.querySelectorAll('.game-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('gamesMenu').style.display='grid';
+}
+
+// ---- ROULETTE ----
+const DESTINATIONS=[
+  {name:'🇯🇵 日本·京都',flags:'🌸',color:'#e8a0bf',desc:'千年古都，赏花观叶的不二之选',best:'3月樱花 / 11月红叶'},
+  {name:'🇰🇷 韩国·济州岛',flags:'🏝️',color:'#4a9eff',desc:'蓝绿色海水与橘子农场的火山岛',best:'9-10月天气最好'},
+  {name:'🇸🇬 新加坡',flags:'🌆',color:'#3ddc84',desc:'花园城市，东南亚最安全的旅行地',best:'全年均可'},
+  {name:'🇻🇳 越南·下龙湾',flags:'🚢',color:'#ffaa33',desc:'千岛石林，乘船游览最美自然遗产',best:'3-5月最佳'},
+  {name:'🇹🇭 泰国·清迈',flags:'🐘',color:'#ff8c69',desc:'古城文化+美食天堂+夜间市场',best:'11月-次年2月凉季'},
+  {name:'🇨🇳 中国·云南',flags:'🌈',color:'#cc66ff',desc:'彩云之南，少数民族文化与壮阔山河',best:'3-5月或9-11月'},
+  {name:'🇮🇩 巴厘岛',flags:'🌺',color:'#ff6b6b',desc:'神庙、稻田、海滩、日落，热带天堂',best:'5-9月旱季'},
+  {name:'🇭🇰 香港',flags:'🏙️',color:'#ffd700',desc:'都市徒步、茶餐厅、维港夜景',best:'10-12月最舒适'},
+];
+function initRoulette(){
+  const wheel=document.getElementById('rouletteWheel');
+  const size=260;const n=DESTINATIONS.length;
+  const canvas=document.createElement('canvas');
+  canvas.width=canvas.height=size;
+  const ctx=canvas.getContext('2d');
+  const r=size/2;const slice=2*Math.PI/n;
+  DESTINATIONS.forEach((d,i)=>{
+    ctx.beginPath();ctx.moveTo(r,r);
+    ctx.arc(r,r,r-2,i*slice,(i+1)*slice);
+    ctx.closePath();
+    ctx.fillStyle=d.color+'33';ctx.fill();
+    ctx.strokeStyle=d.color;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.save();ctx.translate(r,r);ctx.rotate((i+.5)*slice);
+    ctx.textAlign='right';ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';
+    ctx.fillText(d.flags,r-8,4);ctx.restore();
+  });
+  wheel.innerHTML='';wheel.appendChild(canvas);
+  const center=document.createElement('div');center.className='wheel-center';center.textContent='🎲';
+  wheel.appendChild(center);
+  const today=new Date().toDateString();
+  const saved=JSON.parse(localStorage.getItem('roulette-state')||'{}');
+  if(saved.date!==today){localStorage.setItem('roulette-state',JSON.stringify({date:today,spins:0}));saved.spins=0}
+  document.getElementById('rouletteTimes').textContent=Math.max(0,3-saved.spins);
+  if(saved.spins>=3)document.getElementById('rouletteBtn').disabled=true;
+}
+let spinning=false;
+let currentWheelAngle=0;
+function spinRoulette(){
+  if(spinning)return;
+  const today=new Date().toDateString();
+  const saved=JSON.parse(localStorage.getItem('roulette-state')||'{}');
+  if(saved.date!==today){saved.date=today;saved.spins=0}
+  if(saved.spins>=3)return;
+  saved.spins++;localStorage.setItem('roulette-state',JSON.stringify(saved));
+  document.getElementById('rouletteTimes').textContent=Math.max(0,3-saved.spins);
+  if(saved.spins>=3)document.getElementById('rouletteBtn').disabled=true;
+  spinning=true;
+  const n=DESTINATIONS.length;
+  const idx=Math.floor(Math.random()*n);
+  const slice=360/n;
+  const extra=5*360;
+  const target=extra+(360-idx*slice-slice/2);
+  currentWheelAngle+=target;
+  const wheel=document.getElementById('rouletteWheel');
+  wheel.style.transform=`rotate(${currentWheelAngle}deg)`;
+  setTimeout(()=>{
+    spinning=false;
+    const dest=DESTINATIONS[idx];
+    document.getElementById('resultDest').textContent=dest.name;
+    document.getElementById('resultFlags').textContent=dest.flags;
+    document.getElementById('resultDesc').textContent=dest.desc;
+    document.getElementById('resultBest').textContent='🌟 最佳旅行时间：'+dest.best;
+    const r=document.getElementById('rouletteResult');
+    r.classList.add('show');
+    S.exp+=15;save();updateHUD();
+  },4200);
+}
+
+// ---- QUIZ ----
+const QUESTIONS=[
+  {q:'哪座城市被称为"东南亚的十字路口"，融合了中华、马来、英式文化？',opts:['新加坡','曼谷','吉隆坡','雅加达'],ans:0,exp:20,explain:'新加坡多元文化交融，是东南亚最具代表性的多元文明城市。'},
+  {q:'日本京都的伏见稻荷大社以什么闻名于世？',opts:['千本樱花','上万座朱红鸟居','最大佛像','温泉汤池'],ans:1,exp:15,explain:'伏见稻荷的千本鸟居绵延山顶，是京都乃至日本最具代表性的景观之一。'},
+  {q:'马丘比丘位于哪个国家？',opts:['墨西哥','玻利维亚','秘鲁','哥伦比亚'],ans:2,exp:20,explain:'马丘比丘（Machu Picchu）是秘鲁的印加帝国遗址，海拔约2430米，是世界新七大奇迹之一。'},
+  {q:'济州岛的牛岛以什么最著名？',opts:['黑猪肉烤肉','花生冰淇淋','橘子酒','海女表演'],ans:1,exp:15,explain:'牛岛特产花生冰淇淋（땅콩 아이스크림）是当地独有美食，配上透明海水，是济州行必打卡体验。'},
+  {q:'新加坡标志性地标"滨海湾金沙"顶层是什么？',opts:['空中花园','无边泳池','摩天轮','展望台'],ans:1,exp:20,explain:'滨海湾金沙顶层的无边泳池（Infinity Pool）是全球最著名的泳池之一，仅限入住酒店客人使用。'},
+  {q:'以下哪个城市以"四季如春"著称，平均气温常年约15-20°C？',opts:['重庆','昆明','武汉','成都'],ans:1,exp:15,explain:'昆明地处云贵高原，海拔约1891米，气候温和，素有"春城"美誉。'},
+  {q:'香港麦理浩径全程大约多长？',opts:['50公里','100公里','150公里','30公里'],ans:1,exp:20,explain:'麦理浩径全程约100公里，共10段，从西贡贯穿至屯门，是香港最著名的长途徒步路线。'},
+  {q:'世界上最繁忙的斑马线在哪里？',opts:['纽约时代广场','东京涩谷','伦敦牛津街','首尔明洞'],ans:1,exp:15,explain:'涩谷十字路口（Shibuya Scramble）是全球最繁忙的行人过路处，绿灯时一次可有500+人同时过马路。'},
+  {q:'三峡大坝位于哪个省份？',opts:['四川','重庆','湖北','湖南'],ans:2,exp:15,explain:'三峡大坝位于湖北省宜昌市三斗坪镇，是世界上最大的水电站。'},
+  {q:'吴哥窟是哪个国家的著名遗址？',opts:['越南','缅甸','泰国','柬埔寨'],ans:3,exp:20,explain:'吴哥窟（Angkor Wat）位于柬埔寨暹粒，是世界上最大的宗教建筑群，也是柬埔寨国家象征。'},
+  {q:'奈良公园的鹿被视为什么？',opts:['旅游吉祥物','国家保护动物','神灵使者','政府保护遗产'],ans:2,exp:15,explain:'奈良的鹿（約1200头）自古被认为是春日大社神灵的使者，受到神圣保护，可以自由在公园游荡。'},
+  {q:'抹茶的主要产地在日本哪里？',opts:['东京','静冈','宇治','京都'],ans:2,exp:20,explain:'宇治（位于京都府）是日本最著名的抹茶产地，宇治茶因其高品质而闻名全国。'},
+];
+let qIdx=0,qScore=0,qAnswered=false,shuffledQ=[];
+function startQuiz(){
+  shuffledQ=[...QUESTIONS].sort(()=>Math.random()-.5).slice(0,10);
+  qIdx=0;qScore=0;
+  document.getElementById('quizScore').classList.remove('show');
+  document.getElementById('quizMain').style.display='block';
+  showQuestion();
+}
+function showQuestion(){
+  const q=shuffledQ[qIdx];
+  document.getElementById('qNum').textContent=qIdx+1;
+  document.getElementById('qScore').textContent=qScore;
+  document.getElementById('qExpHint').textContent=`答对得 +${q.exp} EXP`;
+  document.getElementById('qQuestion').textContent=q.q;
+  document.getElementById('qOptions').innerHTML=q.opts.map((o,i)=>
+    `<button class="quiz-opt" onclick="answerQ(${i})">${o}</button>`
+  ).join('');
+  document.getElementById('qFeedback').classList.remove('show','ok','ng');
+  document.getElementById('qNext').classList.remove('show');
+  qAnswered=false;
+}
+function answerQ(i){
+  if(qAnswered)return;qAnswered=true;
+  const q=shuffledQ[qIdx];
+  const btns=document.querySelectorAll('.quiz-opt');
+  btns.forEach(b=>b.disabled=true);
+  const fb=document.getElementById('qFeedback');
+  if(i===q.ans){
+    btns[i].classList.add('correct');
+    fb.textContent='✅ 正确！'+q.explain;
+    fb.className='quiz-feedback show ok';
+    qScore+=q.exp;S.exp+=q.exp;save();updateHUD();
+  }else{
+    btns[i].classList.add('wrong');
+    btns[q.ans].classList.add('correct');
+    fb.textContent='❌ 答错了。'+q.explain;
+    fb.className='quiz-feedback show ng';
+  }
+  document.getElementById('qNext').classList.add('show');
+}
+function nextQuestion(){
+  qIdx++;
+  if(qIdx>=shuffledQ.length){showQuizResult();return}
+  showQuestion();
+}
+function showQuizResult(){
+  document.getElementById('quizMain').style.display='none';
+  const max=shuffledQ.reduce((s,q)=>s+q.exp,0);
+  const pct=qScore/max;
+  let icon,title;
+  if(pct>=.8){icon='🏆';title='旅行知识大师！'}
+  else if(pct>=.5){icon='🌟';title='合格的旅行者'}
+  else{icon='📚';title='还需多多学习'}
+  const bonus=pct>=.8?50:0;
+  if(bonus){S.exp+=bonus;if(!S.medals.includes('quiz-master'))S.medals.push('quiz-master');save();updateHUD();}
+  document.getElementById('qsIcon').textContent=icon;
+  document.getElementById('qsTitle').textContent=title;
+  document.getElementById('qsExp').textContent=`本轮得分：${qScore} EXP${bonus?` (+${bonus}全答对奖励)`:''}`  ;
+  document.getElementById('qsDetail').textContent=`答对率 ${Math.round(pct*100)}%`;
+  document.getElementById('quizScore').classList.add('show');
+}
+
+// ---- PACKING ----
+const PACK_DESTS=[
+  {id:'beach',icon:'🏖️',name:'海滩度假',
+   must:['防晒霜','泳衣','拖鞋','太阳镜','沙滩巾'],
+   trap:['厚外套','毛线帽','电热毯','登山靴'],
+   all:['防晒霜','泳衣','拖鞋','太阳镜','沙滩巾','轻便T恤','折叠雨伞','厚外套','毛线帽','电热毯','登山靴','防晒衣','潜水镜','充电宝']},
+  {id:'mountain',icon:'⛰️',name:'高山徒步',
+   must:['登山靴','防风外套','地图/导航','饮用水','急救包'],
+   trap:['高跟鞋','宽松睡衣','电吹风','香水'],
+   all:['登山靴','防风外套','地图/导航','饮用水','急救包','保暖内衣','登山杖','高跟鞋','宽松睡衣','电吹风','香水','防晒霜','登山手套','能量棒']},
+  {id:'city',icon:'🏙️',name:'城市旅行',
+   must:['护照','充电宝','信用卡','轻便背包','舒适步行鞋'],
+   trap:['帐篷','登山镐','渔具','催泪弹'],
+   all:['护照','充电宝','信用卡','轻便背包','舒适步行鞋','折叠雨伞','换洗衣物','帐篷','登山镐','渔具','催泪弹','相机','防晒霜','翻译App']},
+  {id:'winter',icon:'❄️',name:'冬季旅行',
+   must:['厚羽绒服','保暖内衣','手套','防滑靴','暖宝宝'],
+   trap:['短裤','人字拖','防晒霜','遮阳帽'],
+   all:['厚羽绒服','保暖内衣','手套','防滑靴','暖宝宝','围巾','毛线帽','短裤','人字拖','防晒霜','遮阳帽','护唇膏','充电宝','保温杯']},
+];
+let selectedDest=null,packedItems=[],packData=null;
+function initPacking(){
+  selectedDest=null;packedItems=[];
+  document.getElementById('packingSetup').style.display='block';
+  document.getElementById('packingGame').classList.remove('show');
+  document.getElementById('packingStartBtn').disabled=true;
+  document.getElementById('destPicker').innerHTML=PACK_DESTS.map(d=>
+    `<div class="dest-btn" onclick="selectDest('${d.id}',this)"><div class="di">${d.icon}</div><div class="dn">${d.name}</div></div>`
+  ).join('');
+}
+function selectDest(id,el){
+  selectedDest=id;
+  document.querySelectorAll('.dest-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('packingStartBtn').disabled=false;
+}
+function startPacking(){
+  if(!selectedDest)return;
+  packData=PACK_DESTS.find(d=>d.id===selectedDest);
+  packedItems=[];
+  document.getElementById('packingSetup').style.display='none';
+  document.getElementById('packingGame').classList.add('show');
+  document.getElementById('packDestTitle').textContent=packData.icon+' '+packData.name+'行李清单';
+  document.getElementById('packInstructions').textContent=`选择${packData.must.length}件必需物品加入行李箱（点击物品加入/移除）`;
+  document.getElementById('suitcase').innerHTML='<div style="color:var(--muted);font-size:13px;padding:8px">行李箱是空的，点击下方物品加入</div>';
+  document.getElementById('packResult').classList.remove('show');
+  const shuffled=[...packData.all].sort(()=>Math.random()-.5);
+  document.getElementById('itemsPool').innerHTML=shuffled.map(item=>
+    `<div class="pack-item" data-item="${item}" onclick="togglePack(this,'${item}')">${item}</div>`
+  ).join('');
+}
+function togglePack(el,item){
+  if(el.classList.contains('selected')){
+    el.classList.remove('selected');
+    packedItems=packedItems.filter(i=>i!==item);
+  }else{
+    if(packData.trap.includes(item)){
+      el.classList.add('wrong-pick');
+      setTimeout(()=>el.classList.remove('wrong-pick'),500);
+      return;
+    }
+    el.classList.add('selected');
+    packedItems.push(item);
+  }
+  const sc=document.getElementById('suitcase');
+  if(packedItems.length===0){sc.innerHTML='<div style="color:var(--muted);font-size:13px;padding:8px">行李箱是空的，点击下方物品加入</div>'}
+  else{sc.innerHTML=packedItems.map(i=>`<div class="packed-item">${i}</div>`).join('')}
+}
+function submitPacking(){
+  const correct=packData.must.filter(m=>packedItems.includes(m)).length;
+  const total=packData.must.length;
+  const pr=document.getElementById('packResult');
+  let msg,bg,exp=0;
+  if(correct===total){
+    msg=`🎉 完美打包！${total}/${total}件必需品全部选对！`;
+    bg='background:#0d2d0d;border:1px solid var(--green);color:var(--green)';
+    exp=80;
+    if(!S.medals.includes('packing-pro'))S.medals.push('packing-pro');
+  }else if(correct>=total*.6){
+    msg=`😊 还不错！选对了${correct}/${total}件必需品`;
+    bg='background:#2d2000;border:1px solid #ffaa33;color:#ffaa33';
+    exp=40;
+  }else{
+    msg=`😅 需要加油！只选对了${correct}/${total}件必需品\n必需品：${packData.must.join('、')}`;
+    bg='background:#2d0d0d;border:1px solid var(--red);color:var(--red)';
+    exp=10;
+  }
+  S.exp+=exp;save();updateHUD();
+  pr.innerHTML=`<div style="${bg};padding:12px;border-radius:8px;white-space:pre-line">${msg}</div><div style="color:var(--accent);margin-top:8px;font-weight:700">+${exp} EXP 已到账</div>`;
+  pr.classList.add('show');
+}
+
+// ---- MATCH ----
+const LANDMARKS=[
+  {icon:'🗼',name:'东京塔'},{icon:'🗽',name:'自由女神'},{icon:'🏯',name:'姬路城'},
+  {icon:'🕌',name:'泰姬陵'},{icon:'⛩️',name:'伏见稻荷'},{icon:'🏛️',name:'帕特农神庙'},
+  {icon:'🌉',name:'金门大桥'},{icon:'🕍',name:'圣家族'},
+];
+let matchCards=[],flipped=[],matchedPairs=0,matchFlipCount=0,matchTimer=null,matchSec=0,matchDone=false;
+function initMatch(){
+  matchedPairs=0;matchFlipCount=0;matchSec=0;matchDone=false;flipped=[];
+  clearInterval(matchTimer);
+  document.getElementById('matchMatched').textContent='0';
+  document.getElementById('matchFlips').textContent='0';
+  document.getElementById('matchTimer').textContent='⏱️ 0s';
+  document.getElementById('matchRestart').style.display='none';
+  const pairs=[...LANDMARKS,...LANDMARKS].map((l,i)=>({...l,idx:i,flipped:false,matched:false}));
+  matchCards=pairs.sort(()=>Math.random()-.5);
+  const grid=document.getElementById('matchGrid');
+  grid.innerHTML=matchCards.map((c,i)=>
+    `<div class="match-card" id="mc${i}" onclick="flipCard(${i})">?</div>`
+  ).join('');
+  matchTimer=setInterval(()=>{
+    if(matchDone)return;
+    matchSec++;document.getElementById('matchTimer').textContent=`⏱️ ${matchSec}s`;
+  },1000);
+}
+let lockMatch=false;
+function flipCard(i){
+  if(lockMatch||matchCards[i].flipped||matchCards[i].matched)return;
+  matchCards[i].flipped=true;
+  const el=document.getElementById('mc'+i);
+  el.classList.add('flipped');
+  el.textContent=matchCards[i].icon;
+  flipped.push(i);
+  if(flipped.length===2){
+    lockMatch=true;matchFlipCount++;
+    document.getElementById('matchFlips').textContent=matchFlipCount;
+    const [a,b]=flipped;
+    if(matchCards[a].icon===matchCards[b].icon&&a!==b){
+      matchCards[a].matched=matchCards[b].matched=true;
+      document.getElementById('mc'+a).classList.add('matched');
+      document.getElementById('mc'+b).classList.add('matched');
+      matchedPairs++;
+      document.getElementById('matchMatched').textContent=matchedPairs;
+      flipped=[];lockMatch=false;
+      if(matchedPairs===LANDMARKS.length){endMatch()}
+    }else{
+      setTimeout(()=>{
+        [a,b].forEach(idx=>{
+          matchCards[idx].flipped=false;
+          const e=document.getElementById('mc'+idx);
+          e.classList.remove('flipped');e.textContent='?';
+        });
+        flipped=[];lockMatch=false;
+      },800);
+    }
+  }
+}
+function endMatch(){
+  clearInterval(matchTimer);matchDone=true;
+  let exp=60;
+  if(matchSec<=60&&!S.medals.includes('match-speed'))S.medals.push('match-speed');
+  S.exp+=exp;save();updateHUD();
+  document.getElementById('matchRestart').style.display='block';
+  showAch('🃏','配对完成！',`用时${matchSec}秒，翻牌${matchFlipCount}次`,exp, matchSec<=60?'⚡ 获得勋章：地标闪电手':'');
+}
+
+// ===================== INIT =====================
+updateHUD();renderChapters();
+</script>
+</body>
+</html>
