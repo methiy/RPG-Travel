@@ -95,7 +95,23 @@ function onComplete() {
 
 <style scoped>
 .chapter-page {
+  position: relative;
   padding: 24px;
+}
+
+.chapter-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--theme-pattern);
+  opacity: 1;
+}
+
+.chapter-page > * {
+  position: relative;
+  z-index: 1;
 }
 .breadcrumb {
   display: flex;

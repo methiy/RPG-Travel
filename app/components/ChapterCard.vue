@@ -71,7 +71,7 @@ function handleClick() {
 .chapter-card:hover {
   transform: translateY(-4px);
   border-color: var(--card-primary, var(--accent));
-  box-shadow: 0 12px 30px rgba(74, 158, 255, .2);
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--card-primary, var(--accent)) 20%, transparent);
 }
 .chapter-card.locked {
   opacity: .5;
