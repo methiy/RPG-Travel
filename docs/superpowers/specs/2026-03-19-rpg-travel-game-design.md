@@ -109,8 +109,8 @@ interface GameState {
 interface LevelInfo {
   lv: number
   title: string
-  need: number
-  cur: number
+  need: number           // EXP delta required for THIS level (not cumulative)
+  cur: number            // EXP progress within current level (0 to need), used for EXP bar
 }
 ```
 
@@ -146,7 +146,7 @@ interface LevelInfo {
 | 7 | 星际旅人 | 4000 | 👑 |
 | 8 | 宇宙漫游者 | ∞ | 🚀 |
 
-EXP is cumulative. Each level requires the listed EXP amount beyond the previous level.
+EXP values are **per-level deltas** (not cumulative thresholds). The `levelInfo(exp)` function subtracts each level's `need` progressively from total EXP to determine current level and progress. At the max level (8), EXP continues to accumulate but the level no longer advances.
 
 ## Task System
 
@@ -164,9 +164,29 @@ EXP is cumulative. Each level requires the listed EXP amount beyond the previous
 5. Task card shows "completed" state
 
 ### Task Data
-- Chapters 1-6: retain all tasks from reference file
-- Chapter 7 (Africa/Middle East): ~6 new tasks (pyramids, Sahara, Dubai, safari, etc.)
-- Chapter 8 (Oceania): ~6 new tasks (Great Barrier Reef, Sydney, Milford Sound, etc.)
+- Chapters 1-6: retain all tasks from reference file (tasks embedded with inline `medal: Medal` objects)
+- Chapter 7 (Africa/Middle East): 6 new tasks:
+  - af1: 埃及·站在吉萨金字塔前 (easy, 100 EXP, 🔺 金字塔见证者)
+  - af2: 摩洛哥·穿越菲斯古城迷宫 (medium, 180 EXP, 🏺 古城迷踪者)
+  - af3: 迪拜·登上哈利法塔观景台 (medium, 200 EXP, 🏗️ 云端登临者)
+  - af4: 南非·在好望角打卡 (medium, 160 EXP, 🌊 好望角勇者)
+  - af5: 迪拜·穿越沙漠冲沙 (hard, 300 EXP, 🏜️ 沙漠征服者)
+  - af6: 南非·克鲁格国家公园观五大兽 (legendary, 500 EXP, 🦁 非洲猎游者)
+- Chapter 8 (Oceania): 6 new tasks:
+  - oc1: 澳大利亚·在悉尼歌剧院前打卡 (easy, 90 EXP, 🎭 歌剧院访客)
+  - oc2: 澳大利亚·潜水大堡礁 (hard, 350 EXP, 🐠 大堡礁潜行者)
+  - oc3: 新西兰·米尔福德峡湾巡游 (medium, 200 EXP, 🏔️ 峡湾探索者)
+  - oc4: 新西兰·挑战皇后镇蹦极 (hard, 320 EXP, 🪂 极限勇者)
+  - oc5: 斐济·在私人海岛浮潜 (medium, 180 EXP, 🏝️ 南太平洋岛民)
+  - oc6: 大堡礁·乘直升机俯瞰心形礁 (legendary, 550 EXP, 💙 心形礁发现者)
+
+### Medal Data Source
+- `medals.ts` is a **computed re-export**: it collects all medals from `tasks.ts` (each task's inline `medal` field) plus the 3 game-only medals, and exports a flat `ALL_MEDALS` array. It is NOT the canonical source — task definitions are.
+- `GameState.medals` stores medal IDs (`string[]`), looked up against `ALL_MEDALS` for display.
+
+### Countries Stat
+- Derived at render time: `new Set(completedTasks.map(t => t.country)).size`
+- Each task has a `country` field (e.g. "日本", "韩国", "新加坡", "法国", "埃及", "澳大利亚", etc.)
 
 ## Medal System
 
@@ -179,8 +199,20 @@ EXP is cumulative. Each level requires the listed EXP amount beyond the previous
 ## Mini-Games
 
 ### 🎡 Holiday Roulette
-- 12 global destinations on Canvas wheel
-- 3 spins/day (localStorage date tracking)
+- 12 global destinations on Canvas wheel:
+  1. 🇯🇵 日本·京都 — 千年古都 (🌸, 3月樱花/11月红叶)
+  2. 🇰🇷 韩国·济州岛 — 火山岛 (🏝️, 9-10月)
+  3. 🇸🇬 新加坡 — 花园城市 (🌆, 全年)
+  4. 🇻🇳 越南·下龙湾 — 千岛石林 (🚢, 3-5月)
+  5. 🇹🇭 泰国·清迈 — 古城文化 (🐘, 11-2月)
+  6. 🇨🇳 中国·云南 — 彩云之南 (🌈, 3-5月/9-11月)
+  7. 🇮🇩 巴厘岛 — 热带天堂 (🌺, 5-9月)
+  8. 🇭🇰 香港 — 都市徒步 (🏙️, 10-12月)
+  9. 🇪🇬 埃及·开罗 — 金字塔之国 (🔺, 10-4月)
+  10. 🇦🇺 澳大利亚·悉尼 — 南半球明珠 (🦘, 9-11月)
+  11. 🇧🇷 巴西·里约 — 桑巴之都 (💃, 12-3月)
+  12. 🇫🇷 法国·巴黎 — 浪漫之都 (🗼, 4-6月/9-10月)
+- 3 spins/day tracked via localStorage key `travelrpg2_roulette` with `{ date: new Date().toDateString(), spins: number }` (resets at local midnight)
 - +15 EXP per spin
 - Shows destination info + best travel season
 - CSS cubic-bezier deceleration animation (4s)
@@ -188,19 +220,22 @@ EXP is cumulative. Each level requires the listed EXP amount beyond the previous
 ### 🧭 Travel Quiz
 - 20+ question bank, 10 random per round
 - Multiple choice, instant feedback with explanation
-- +15-30 EXP per correct answer
+- EXP varies per question: each question has its own `exp` value (15 or 20), defined in quiz-questions.ts data
 - 80%+ score: +50 bonus EXP + "quiz master" medal
 
 ### 🧳 Packing Challenge
 - 6 scenarios: beach, mountain, city, winter, desert (new), rainforest (new)
+- Desert scenario: must items [防晒霜, 饮用水, 遮阳帽, 轻便长袖, 防沙围巾], trap items [厚羽绒服, 雨靴, 泳衣, 毛线手套]
+- Rainforest scenario: must items [防蚊喷雾, 雨衣, 登山靴, 急救包, 防水背包], trap items [高跟鞋, 电吹风, 白色衬衫, 香水]
 - Select correct items from pool; trap items shake on click
 - Perfect pack: +80 EXP + medal
 
 ### 🃏 Landmark Matching
-- 4x4 grid, 8 pairs of global landmarks
+- 4x4 grid, 8 pairs of global landmarks:
+  1. 🗼 东京塔  2. 🗽 自由女神  3. 🏯 姬路城  4. 🕌 泰姬陵
+  5. ⛩️ 伏见稻荷  6. 🏛️ 帕特农神庙  7. 🌉 金门大桥  8. 🕍 圣家族
 - Timer + flip counter
 - Complete: +60 EXP; under 60s: "speed" medal
-- Expanded landmarks: pyramids, Sydney Opera House, Burj Khalifa, etc.
 
 ## Per-Chapter Themed Visuals
 
@@ -257,7 +292,7 @@ Each chapter has a unique visual identity applied when entering its detail page.
 - Global CSS variables defined in `app.vue` `<style>`
 - Component styles use `<style scoped>`
 - `<ClientOnly>` wraps all localStorage-dependent rendering
-- Page transitions via Nuxt's built-in `<NuxtPage>` transition support
+- Page transitions: use Nuxt default `fade` transition (opacity 0→1, 200ms ease) for all page navigations
 - Navigation via `<NuxtLink>` and `navigateTo()`
 
 ## Component Specifications
@@ -318,3 +353,6 @@ Each chapter has a unique visual identity applied when entering its detail page.
 - Backend / user accounts / cloud save
 - i18n (Chinese only for now)
 - Sound effects / music
+- Accessibility (ARIA, keyboard nav) — known limitation
+- Progress reset functionality — may add later
+- "All cities" tab in chapter view — intentional omission, filter by city only
