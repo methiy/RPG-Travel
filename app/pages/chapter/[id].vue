@@ -36,16 +36,18 @@ function onTaskClick(task: Task) {
   showModal.value = true
 }
 
-function onComplete() {
+function onComplete(mode: 'checkin' | 'virtual', expMultiplier: number) {
   if (!selectedTask.value) return
   const task = selectedTask.value
-  completeTask(task.id, task.exp, task.medal.id)
+  const actualExp = Math.floor(task.exp * expMultiplier)
+  completeTask(task.id, actualExp, task.medal.id)
   showModal.value = false
+  const modeLabel = mode === 'checkin' ? '📍 实地打卡' : '🎮 虚拟完成'
   achievement.show({
     icon: task.medal.icon,
     title: '任务完成！',
-    sub: '「' + task.name + '」',
-    exp: task.exp,
+    sub: '「' + task.name + '」' + modeLabel,
+    exp: actualExp,
     medal: '🏅 获得勋章：' + task.medal.name,
   })
 }

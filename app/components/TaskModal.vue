@@ -8,12 +8,28 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  complete: []
+  complete: [mode: 'checkin' | 'virtual', expMultiplier: number]
 }>()
 
 const { isTaskCompleted } = useGameState()
+const { capturePhoto, getCurrentLocation, isNearLocation, calculateDistance, savePhoto, getPhotoForTask } = usePhotoCheckin()
 
 const done = computed(() => props.task ? isTaskCompleted(props.task.id) : false)
+
+const checkinLoading = ref(false)
+const checkinResult = ref<{ photo: string; near: boolean; distance?: number } | null>(null)
+
+// Get existing photo for current task
+const existingPhoto = computed(() => {
+  if (import.meta.server || !props.task) return null
+  return getPhotoForTask(props.task.id)
+})
+
+// Reset state when task changes
+watch(() => props.task?.id, () => {
+  checkinLoading.value = false
+  checkinResult.value = null
+})
 
 const diffLabels: Record<string, string> = {
   easy: '简单 ⭐',
@@ -26,6 +42,56 @@ function onOverlayClick(e: MouseEvent) {
   if (e.target === e.currentTarget) {
     emit('close')
   }
+}
+
+async function onCheckin() {
+  if (!props.task || done.value) return
+  checkinLoading.value = true
+
+  try {
+    // Step 1: Capture photo
+    const dataUrl = await capturePhoto()
+
+    // Step 2: Get GPS location
+    const location = await getCurrentLocation()
+
+    // Step 3: Check proximity
+    let near = false
+    let distance: number | undefined
+    if (location && props.task.location) {
+      distance = Math.round(calculateDistance(location, props.task.location))
+      near = isNearLocation(location, props.task.location)
+    }
+
+    // Step 4: Save photo
+    savePhoto({
+      taskId: props.task.id,
+      dataUrl,
+      timestamp: Date.now(),
+      location: location ?? undefined,
+    })
+
+    checkinResult.value = { photo: dataUrl, near, distance }
+
+    // Complete with full EXP (photo check-in always gets 100%)
+    emit('complete', 'checkin', 1)
+  } catch {
+    // User cancelled photo - do nothing
+  } finally {
+    checkinLoading.value = false
+  }
+}
+
+function onVirtualComplete() {
+  if (!props.task || done.value) return
+  emit('complete', 'virtual', 0.7)
+}
+
+function formatTime(ts: number) {
+  return new Date(ts).toLocaleString('zh-CN', {
+    month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
 }
 </script>
 
@@ -86,13 +152,55 @@ function onOverlayClick(e: MouseEvent) {
           </div>
         </div>
 
-        <button
-          class="complete-btn"
-          :disabled="done"
-          @click="emit('complete')"
-        >
-          {{ done ? '✅ 任务已完成' : '🎯 完成此任务，获得奖励！' }}
-        </button>
+        <!-- Existing check-in photo display -->
+        <div v-if="existingPhoto && done" class="checkin-result">
+          <img :src="existingPhoto.dataUrl" class="checkin-thumb" alt="打卡照片">
+          <div class="checkin-info">
+            <div class="checkin-badge checkin-badge-real">📍 已在现场打卡</div>
+            <div class="checkin-time">{{ formatTime(existingPhoto.timestamp) }}</div>
+          </div>
+        </div>
+
+        <!-- Just-captured check-in result -->
+        <div v-else-if="checkinResult" class="checkin-result">
+          <img :src="checkinResult.photo" class="checkin-thumb" alt="打卡照片">
+          <div class="checkin-info">
+            <div v-if="checkinResult.near" class="checkin-badge checkin-badge-real">📍 已在现场打卡</div>
+            <div v-else class="checkin-badge checkin-badge-photo">📸 已拍照打卡</div>
+            <div v-if="checkinResult.distance != null" class="checkin-distance">
+              距离: {{ checkinResult.distance >= 1000 ? (checkinResult.distance / 1000).toFixed(1) + 'km' : checkinResult.distance + 'm' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Completion buttons -->
+        <template v-if="!done">
+          <button
+            class="checkin-btn"
+            :disabled="checkinLoading"
+            @click="onCheckin"
+          >
+            <template v-if="checkinLoading">
+              ⏳ 正在打卡...
+            </template>
+            <template v-else>
+              <div class="checkin-btn-title">📍 实地打卡拍照</div>
+              <div class="checkin-btn-sub">获得全额 +{{ task.exp }} EXP</div>
+            </template>
+          </button>
+          <button
+            class="virtual-btn"
+            @click="onVirtualComplete"
+          >
+            🎮 虚拟完成 (+{{ Math.floor(task.exp * 0.7) }} EXP)
+          </button>
+        </template>
+        <template v-else>
+          <button class="complete-btn" disabled>
+            ✅ 任务已完成
+          </button>
+        </template>
+
         <button class="close-btn" @click="emit('close')">
           关闭
         </button>
@@ -257,30 +365,104 @@ function onOverlayClick(e: MouseEvent) {
   color: var(--muted);
   margin-top: 4px;
 }
-.complete-btn {
+
+/* Check-in result display */
+.checkin-result {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.checkin-thumb {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.checkin-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.checkin-badge {
+  font-size: 13px;
+  font-weight: 700;
+}
+.checkin-badge-real {
+  color: var(--green);
+}
+.checkin-badge-photo {
+  color: var(--accent);
+}
+.checkin-time, .checkin-distance {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Dual completion buttons */
+.checkin-btn {
   width: 100%;
-  padding: 14px;
+  padding: 16px;
   background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: #fff;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s;
   margin-top: 16px;
-  letter-spacing: 0.5px;
+  text-align: center;
 }
-.complete-btn:hover {
+.checkin-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(74, 158, 255, 0.4);
 }
-.complete-btn:disabled {
+.checkin-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+.checkin-btn-title {
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+.checkin-btn-sub {
+  font-size: 12px;
+  opacity: 0.85;
+  font-weight: 400;
+}
+.virtual-btn {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s;
+}
+.virtual-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.complete-btn {
+  width: 100%;
+  padding: 14px;
   background: #2a3a5e;
   color: #556;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  margin-top: 16px;
 }
 .close-btn {
   width: 100%;

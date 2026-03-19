@@ -10,6 +10,13 @@ const emit = defineEmits<{
   click: []
 }>()
 
+const { getPhotoForTask } = usePhotoCheckin()
+
+const hasPhoto = computed(() => {
+  if (import.meta.server) return false
+  return !!getPhotoForTask(props.task.id)
+})
+
 const diffLabels: Record<string, string> = {
   easy: '简单',
   medium: '中等',
@@ -35,7 +42,11 @@ const diffLabels: Record<string, string> = {
       <span class="rwd rwd-exp">⚡ +{{ task.exp }}</span>
       <span class="rwd rwd-medal">🏅 {{ task.medal.name }}</span>
     </div>
-    <div v-if="done" class="task-done-icon">✅ 已完成</div>
+    <div v-if="done" class="task-done-row">
+      <span class="task-done-text">✅ 已完成</span>
+      <span v-if="hasPhoto" class="mode-badge mode-real">📍 实地</span>
+      <span v-else class="mode-badge mode-virtual">🎮 虚拟</span>
+    </div>
   </div>
 </template>
 
@@ -121,5 +132,30 @@ const diffLabels: Record<string, string> = {
 .task-done-icon {
   font-size: 20px;
   margin-top: 8px;
+}
+.task-done-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.task-done-text {
+  font-size: 20px;
+}
+.mode-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+.mode-real {
+  background: #0d2d0d;
+  color: var(--green);
+  border: 1px solid var(--green);
+}
+.mode-virtual {
+  background: #1a1a2e;
+  color: var(--muted);
+  border: 1px solid var(--border);
 }
 </style>
