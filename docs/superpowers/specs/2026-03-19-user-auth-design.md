@@ -15,7 +15,7 @@ Add user registration/login system with server-side game progress storage, enabl
 
 - **Backend**: Nuxt built-in server (`server/` directory, Nitro/h3)
 - **Database**: SQLite via `better-sqlite3` — stored at `data/travelrpg.db`
-- **Password hashing**: `bcrypt` (salt rounds = 10)
+- **Password hashing**: `bcryptjs` (pure JS, no native compilation needed; salt rounds = 10)
 - **Authentication**: httpOnly signed cookie (no JWT)
 - **Deployment target**: Node.js server (self-hosted)
 
@@ -70,6 +70,8 @@ All routes under `server/api/`:
 
 **Response**: `{ user: { id, username, displayName } }` + sets auth cookie
 
+Successful registration automatically logs the user in and redirects to `/`.
+
 **Errors**: 400 (validation), 409 (username taken)
 
 ### Login (`POST /api/auth/login`)
@@ -86,13 +88,20 @@ All routes under `server/api/`:
 
 **PUT request body**: `{ exp: number, completed: string[], medals: string[] }`
 
+**Validation**:
+- `exp`: non-negative integer
+- `completed`: array of strings, max 5000 entries, each max 100 chars
+- `medals`: array of strings, max 1000 entries, each max 100 chars
+
+**Conflict strategy**: Last-write-wins for v1. Acceptable since a single user rarely plays on two devices simultaneously. Future improvement: optimistic locking via `updated_at`.
+
 **PUT response**: `{ success: true }`
 
 ## Authentication Flow
 
 ### Cookie-based session:
 1. On login/register, server creates a signed cookie containing user ID
-2. Cookie is `httpOnly` (no JS access), `sameSite: lax`, `path: /`
+2. Cookie is `httpOnly` (no JS access), `sameSite: lax`, `path: /`, `maxAge: 30 days`
 3. Server middleware (`server/middleware/auth.ts`) reads cookie on every request
 4. Parsed user info is set to `event.context.user`
 5. Protected API routes check for `event.context.user`
@@ -100,6 +109,8 @@ All routes under `server/api/`:
 ### Cookie signing:
 - Use `h3`'s built-in `setCookie`/`getCookie` with a secret from environment variable `AUTH_SECRET`
 - Simple signed cookie approach (HMAC), no external session store needed
+- `AUTH_SECRET` is required at startup — server fails fast if not set
+- Generate with: `openssl rand -hex 32` (minimum 32 bytes recommended)
 
 ## Frontend Changes
 
@@ -140,11 +151,13 @@ All routes under `server/api/`:
 
 ### Data Migration
 
-On first login, if localStorage contains existing progress (`travelrpg2` key) AND server has no progress for this user:
-- Show prompt: "Found local save data (Level X, Y tasks). Import to your account?"
-- If yes: upload localStorage data to server
-- If no: start fresh
-- After migration, clear localStorage game data
+On first login, handle all four scenarios:
+1. **No local data + no server data** → start fresh (default)
+2. **Local data + no server data** → prompt: "Found local save (Level X, Y tasks). Import?" If yes, upload to server
+3. **No local data + server data exists** → load from server (normal cross-device login)
+4. **Local data + server data exists** → server data takes priority (already synced from another device)
+
+After successful migration (scenario 2), only clear localStorage after confirmed server upload success.
 
 ### TopBar Changes
 
@@ -154,9 +167,15 @@ On first login, if localStorage contains existing progress (`travelrpg2` key) AN
 ## New Dependencies
 
 ```
-better-sqlite3    — SQLite driver
-bcrypt             — Password hashing
+better-sqlite3    — SQLite driver (synchronous API; acceptable for small-scale self-hosted use)
+bcryptjs           — Password hashing (pure JS, no native compilation needed)
 ```
+
+Note: `better-sqlite3` uses synchronous APIs which block the event loop. For the expected scale (dozens of concurrent users), this is fine. If scaling becomes a concern, migrate to `drizzle` + `libsql`.
+
+### Database versioning
+
+For v1, tables are created via `CREATE TABLE IF NOT EXISTS` on startup. Since the project is pre-production, schema changes can be handled by recreating the database. A proper migration system (versioned SQL files) should be added before production launch with real user data.
 
 ## File Structure (new files)
 
@@ -189,7 +208,7 @@ app/
 
 ## Security Considerations
 
-- Passwords hashed with bcrypt (never stored in plain text)
+- Passwords hashed with bcryptjs (never stored in plain text)
 - httpOnly cookies prevent XSS token theft
 - Input validation on all endpoints (prevent SQL injection via parameterized queries)
 - Rate limiting not included in v1 (can add later if needed)
