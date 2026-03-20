@@ -226,6 +226,77 @@ export async function getLeaderboard(sortBy: 'exp' | 'completed' | 'medals' = 'e
   }))
 }
 
+// ---- Public Photo Feed API ----
+
+export interface PublicPhoto {
+  id: number
+  displayName: string
+  taskId: string
+  dataUrl: string
+  timestamp: number
+  comment: string
+  likes: number
+  likedByMe: boolean
+}
+
+export async function getPublicFeed(viewerUserId: number | null, limit: number = 30, offset: number = 0): Promise<PublicPhoto[]> {
+  await initDB()
+
+  // Ensure likes table exists
+  await sql`
+    CREATE TABLE IF NOT EXISTS photo_likes (
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      photo_id INTEGER NOT NULL REFERENCES checkin_photos(id),
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (user_id, photo_id)
+    )
+  `
+
+  const { rows } = await sql.query(
+    `SELECT cp.id, u.display_name, cp.task_id, cp.data_url, cp.timestamp, cp.comment,
+            COALESCE(lc.cnt, 0) as likes,
+            CASE WHEN ml.photo_id IS NOT NULL THEN true ELSE false END as liked_by_me
+     FROM checkin_photos cp
+     JOIN users u ON cp.user_id = u.id
+     LEFT JOIN (SELECT photo_id, COUNT(*) as cnt FROM photo_likes GROUP BY photo_id) lc ON lc.photo_id = cp.id
+     LEFT JOIN photo_likes ml ON ml.photo_id = cp.id AND ml.user_id = $1
+     ORDER BY cp.timestamp DESC
+     LIMIT $2 OFFSET $3`,
+    [viewerUserId ?? 0, limit, offset],
+  )
+
+  return rows.map((row: Record<string, unknown>) => ({
+    id: row.id as number,
+    displayName: row.display_name as string,
+    taskId: row.task_id as string,
+    dataUrl: row.data_url as string,
+    timestamp: Number(row.timestamp),
+    comment: (row.comment as string) || '',
+    likes: Number(row.likes),
+    likedByMe: row.liked_by_me as boolean,
+  }))
+}
+
+export async function togglePhotoLike(userId: number, photoId: number): Promise<{ liked: boolean; likes: number }> {
+  await initDB()
+
+  // Check if already liked
+  const { rows: existing } = await sql`
+    SELECT 1 FROM photo_likes WHERE user_id = ${userId} AND photo_id = ${photoId}
+  `
+
+  if (existing.length > 0) {
+    await sql`DELETE FROM photo_likes WHERE user_id = ${userId} AND photo_id = ${photoId}`
+  } else {
+    await sql`INSERT INTO photo_likes (user_id, photo_id) VALUES (${userId}, ${photoId})`
+  }
+
+  const { rows: countRows } = await sql`SELECT COUNT(*) as cnt FROM photo_likes WHERE photo_id = ${photoId}`
+  const likes = Number(countRows[0]?.cnt ?? 0)
+
+  return { liked: existing.length === 0, likes }
+}
+
 // ---- Daily Checkin API ----
 
 interface DailyCheckinRecord {
