@@ -49,11 +49,16 @@ async function onCheckin() {
   checkinLoading.value = true
 
   try {
-    // Step 1: Capture photo
+    // Step 1: Capture photo (required - if user cancels, abort)
     const dataUrl = await capturePhoto()
 
-    // Step 2: Get GPS location
-    const location = await getCurrentLocation()
+    // Step 2: Get GPS location (optional - don't block completion)
+    let location: { lat: number; lng: number } | null = null
+    try {
+      location = await getCurrentLocation()
+    } catch {
+      // GPS unavailable - continue without location
+    }
 
     // Step 3: Check proximity
     let near = false
@@ -63,20 +68,24 @@ async function onCheckin() {
       near = isNearLocation(location, props.task.location)
     }
 
-    // Step 4: Save photo
-    savePhoto({
-      taskId: props.task.id,
-      dataUrl,
-      timestamp: Date.now(),
-      location: location ?? undefined,
-    })
+    // Step 4: Save photo (optional - don't block completion)
+    try {
+      savePhoto({
+        taskId: props.task.id,
+        dataUrl,
+        timestamp: Date.now(),
+        location: location ?? undefined,
+      })
+    } catch {
+      // Storage full etc - continue without saving photo
+    }
 
     checkinResult.value = { photo: dataUrl, near, distance }
 
     // Complete with full EXP (photo check-in always gets 100%)
     emit('complete', 'checkin', 1)
   } catch {
-    // User cancelled photo - do nothing
+    // User cancelled photo selection - do nothing
   } finally {
     checkinLoading.value = false
   }
