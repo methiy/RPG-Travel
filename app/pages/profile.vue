@@ -80,6 +80,14 @@
         </div>
       </section>
 
+      <!-- 区域 4.5：成就进度 -->
+      <NuxtLink to="/achievements" class="timeline-link">
+        <span class="timeline-link-icon">🏆</span>
+        <span class="timeline-link-text">旅行成就</span>
+        <span class="ach-badge">{{ achUnlockedCount }}/{{ achTotalCount }}</span>
+        <span class="timeline-link-arrow">→</span>
+      </NuxtLink>
+
       <!-- 区域 5：最近获得的勋章 -->
       <section class="section-card">
         <div class="section-header">
@@ -138,6 +146,7 @@ const { state: gameState, levelInfo, avatar, completedCount, medalCount, countri
 const { authState, logout } = useAuth()
 const { state: checkinState } = useDailyCheckin()
 const { getPhotos } = usePhotoCheckin()
+const { unlockedCount: achUnlockedCount, totalCount: achTotalCount } = useAchievements()
 
 const allTasks = computed(() => Object.values(TASKS).flat())
 
@@ -500,6 +509,14 @@ const recentPhotos = computed(() => {
 .timeline-link-arrow {
   font-size: 14px;
   color: var(--accent);
+}
+.ach-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(74, 158, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
 /* 区域 7：退出登录 */
