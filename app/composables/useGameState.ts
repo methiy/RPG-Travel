@@ -140,15 +140,27 @@ export function useGameState() {
     if (!state.value.medals.includes(medalId)) {
       state.value.medals.push(medalId)
     }
+    // Immediately persist to server (don't rely on debounced sync)
+    if (isLoggedIn.value) {
+      syncToServer(state.value)
+    }
   }
 
   function addExp(amount: number) {
     state.value.exp += amount
+    // Immediately persist to server
+    if (isLoggedIn.value) {
+      syncToServer(state.value)
+    }
   }
 
   function addMedal(medalId: string) {
     if (!state.value.medals.includes(medalId)) {
       state.value.medals.push(medalId)
+      // Immediately persist to server
+      if (isLoggedIn.value) {
+        syncToServer(state.value)
+      }
     }
   }
 
