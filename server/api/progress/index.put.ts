@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'medals必须是字符串数组（最多1000项）' })
   }
 
-  saveProgress(event.context.user.id, exp, completed, medals)
+  await saveProgress(event.context.user.id, exp, completed, medals)
 
   return { success: true }
 })

@@ -2,14 +2,14 @@ import type { H3Event } from 'h3'
 import { getAuthUserId } from '../utils/auth'
 import { findUserById } from '../database/index'
 
-export default defineEventHandler((event: H3Event) => {
+export default defineEventHandler(async (event: H3Event) => {
   event.context.user = null
 
   const userId = getAuthUserId(event)
   if (!userId) return
 
   try {
-    const user = findUserById(userId)
+    const user = await findUserById(userId)
     if (user) {
       event.context.user = {
         id: user.id,

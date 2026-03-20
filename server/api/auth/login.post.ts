@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: '请输入用户名和密码' })
   }
 
-  const user = findUserByUsername(username)
+  const user = await findUserByUsername(username)
   if (!user) {
     throw createError({ statusCode: 401, message: '用户名或密码错误' })
   }

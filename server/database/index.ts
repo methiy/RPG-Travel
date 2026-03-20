@@ -1,8 +1,4 @@
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
-import { resolve } from 'path'
-
-const DB_DIR = resolve('data')
-const DB_PATH = resolve('data/travelrpg.json')
+import { sql } from '@vercel/postgres'
 
 interface UserRecord {
   id: number
@@ -20,101 +16,92 @@ interface ProgressRecord {
   updated_at: string
 }
 
-interface DBData {
-  users: UserRecord[]
-  game_progress: ProgressRecord[]
-  nextUserId: number
-}
+let initialized = false
 
-let data: DBData | null = null
+async function initDB(): Promise<void> {
+  if (initialized) return
 
-function defaultData(): DBData {
-  return { users: [], game_progress: [], nextUserId: 1 }
-}
+  await sql`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      username VARCHAR(20) UNIQUE NOT NULL,
+      display_name VARCHAR(20) NOT NULL,
+      password_hash TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `
 
-function loadData(): DBData {
-  if (data) return data
+  await sql`
+    CREATE TABLE IF NOT EXISTS game_progress (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id),
+      exp INTEGER DEFAULT 0,
+      completed JSONB DEFAULT '[]',
+      medals JSONB DEFAULT '[]',
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `
 
-  if (!existsSync(DB_DIR)) {
-    mkdirSync(DB_DIR, { recursive: true })
-  }
-
-  if (existsSync(DB_PATH)) {
-    try {
-      const raw = readFileSync(DB_PATH, 'utf-8')
-      data = JSON.parse(raw) as DBData
-    } catch {
-      data = defaultData()
-    }
-  } else {
-    data = defaultData()
-  }
-
-  return data
-}
-
-function saveData(): void {
-  if (!data) return
-  writeFileSync(DB_PATH, JSON.stringify(data, null, 2))
+  initialized = true
 }
 
 // ---- Public API ----
 
-export function findUserByUsername(username: string): UserRecord | undefined {
-  const db = loadData()
-  return db.users.find(u => u.username === username)
+export async function findUserByUsername(username: string): Promise<UserRecord | undefined> {
+  await initDB()
+  const { rows } = await sql`SELECT * FROM users WHERE username = ${username} LIMIT 1`
+  return rows[0] as UserRecord | undefined
 }
 
-export function findUserById(id: number): UserRecord | undefined {
-  const db = loadData()
-  return db.users.find(u => u.id === id)
+export async function findUserById(id: number): Promise<UserRecord | undefined> {
+  await initDB()
+  const { rows } = await sql`SELECT * FROM users WHERE id = ${id} LIMIT 1`
+  return rows[0] as UserRecord | undefined
 }
 
-export function createUser(username: string, displayName: string, passwordHash: string): UserRecord {
-  const db = loadData()
-  const user: UserRecord = {
-    id: db.nextUserId++,
-    username,
-    display_name: displayName,
-    password_hash: passwordHash,
-    created_at: new Date().toISOString(),
-  }
-  db.users.push(user)
+export async function createUser(username: string, displayName: string, passwordHash: string): Promise<UserRecord> {
+  await initDB()
+
+  const { rows } = await sql`
+    INSERT INTO users (username, display_name, password_hash)
+    VALUES (${username}, ${displayName}, ${passwordHash})
+    RETURNING *
+  `
+  const user = rows[0] as UserRecord
 
   // Create empty progress
-  db.game_progress.push({
-    user_id: user.id,
-    exp: 0,
-    completed: [],
-    medals: [],
-    updated_at: new Date().toISOString(),
-  })
+  await sql`
+    INSERT INTO game_progress (user_id, exp, completed, medals)
+    VALUES (${user.id}, 0, '[]'::jsonb, '[]'::jsonb)
+  `
 
-  saveData()
   return user
 }
 
-export function getProgress(userId: number): ProgressRecord | undefined {
-  const db = loadData()
-  return db.game_progress.find(p => p.user_id === userId)
+export async function getProgress(userId: number): Promise<ProgressRecord | undefined> {
+  await initDB()
+  const { rows } = await sql`SELECT * FROM game_progress WHERE user_id = ${userId} LIMIT 1`
+  if (!rows[0]) return undefined
+
+  const row = rows[0] as Record<string, unknown>
+  return {
+    user_id: row.user_id as number,
+    exp: row.exp as number,
+    completed: (typeof row.completed === 'string' ? JSON.parse(row.completed) : row.completed) as string[],
+    medals: (typeof row.medals === 'string' ? JSON.parse(row.medals) : row.medals) as string[],
+    updated_at: row.updated_at as string,
+  }
 }
 
-export function saveProgress(userId: number, exp: number, completed: string[], medals: string[]): void {
-  const db = loadData()
-  const idx = db.game_progress.findIndex(p => p.user_id === userId)
-  const record: ProgressRecord = {
-    user_id: userId,
-    exp,
-    completed,
-    medals,
-    updated_at: new Date().toISOString(),
-  }
+export async function saveProgress(userId: number, exp: number, completed: string[], medals: string[]): Promise<void> {
+  await initDB()
 
-  if (idx >= 0) {
-    db.game_progress[idx] = record
-  } else {
-    db.game_progress.push(record)
-  }
+  const completedJson = JSON.stringify(completed)
+  const medalsJson = JSON.stringify(medals)
 
-  saveData()
+  await sql`
+    INSERT INTO game_progress (user_id, exp, completed, medals, updated_at)
+    VALUES (${userId}, ${exp}, ${completedJson}::jsonb, ${medalsJson}::jsonb, NOW())
+    ON CONFLICT (user_id)
+    DO UPDATE SET exp = ${exp}, completed = ${completedJson}::jsonb, medals = ${medalsJson}::jsonb, updated_at = NOW()
+  `
 }

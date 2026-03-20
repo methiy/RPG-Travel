@@ -20,13 +20,13 @@ export default defineEventHandler(async (event) => {
 
   const trimmedDisplayName = displayName.trim()
 
-  const existing = findUserByUsername(username)
+  const existing = await findUserByUsername(username)
   if (existing) {
     throw createError({ statusCode: 409, message: '该用户名已被占用' })
   }
 
   const passwordHash = await hashPassword(password)
-  const user = createUser(username, trimmedDisplayName, passwordHash)
+  const user = await createUser(username, trimmedDisplayName, passwordHash)
 
   setAuthCookie(event, user.id)
 
