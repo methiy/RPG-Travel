@@ -45,7 +45,7 @@ function getWeekEnd(): Date {
   return end
 }
 
-/** Simple seeded random from week key */
+/** Simple seeded random from week key — returns [0, 1) */
 function seededRandom(seed: string): () => number {
   let hash = 0
   for (let i = 0; i < seed.length; i++) {
@@ -53,7 +53,8 @@ function seededRandom(seed: string): () => number {
   }
   return () => {
     hash = (hash * 1103515245 + 12345) & 0x7fffffff
-    return hash / 0x7fffffff
+    // Ensure strictly less than 1 to avoid array out-of-bounds
+    return (hash % 10000) / 10000
   }
 }
 
@@ -67,7 +68,7 @@ function generateChallenges(weekKey: string): WeeklyChallenge[] {
     const countryTasks = allTasks.filter(t => t.country === c.id)
     return countryTasks.length >= 3
   })
-  const country = countriesWithTasks[Math.floor(rng() * countriesWithTasks.length)]!
+  const country = countriesWithTasks[Math.floor(rng() * countriesWithTasks.length)] ?? countriesWithTasks[0]!
   const countryTaskCount = allTasks.filter(t => t.country === country.id).length
   const countryTarget = Math.min(3, countryTaskCount)
   challenges.push({
@@ -88,7 +89,7 @@ function generateChallenges(weekKey: string): WeeklyChallenge[] {
     { key: 'medium', label: '中等', target: 3, exp: 80 },
     { key: 'hard', label: '困难', target: 2, exp: 100 },
   ]
-  const diff = difficulties[Math.floor(rng() * difficulties.length)]!
+  const diff = difficulties[Math.floor(rng() * difficulties.length)] ?? difficulties[0]!
   challenges.push({
     id: `${weekKey}-difficulty`,
     weekKey,
@@ -102,7 +103,7 @@ function generateChallenges(weekKey: string): WeeklyChallenge[] {
   })
 
   // Challenge 3: Continent exploration
-  const continent = CONTINENTS[Math.floor(rng() * CONTINENTS.length)]!
+  const continent = CONTINENTS[Math.floor(rng() * CONTINENTS.length)] ?? CONTINENTS[0]!
   challenges.push({
     id: `${weekKey}-continent`,
     weekKey,
