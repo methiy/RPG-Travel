@@ -110,10 +110,13 @@ const { isTaskCompleted } = useGameState()
 const searchQuery = ref('')
 const selectedCountry = ref<string | null>(null)
 
-const allTasks = Object.values(TASKS).flat()
+// TASKS is Record<countryId, Task[]>, use key directly
+function getTasksForCountry(countryId: string): Task[] {
+  return TASKS[countryId] ?? []
+}
 
 function getCountryTaskCount(countryId: string): number {
-  return allTasks.filter(t => t.country === countryId).length
+  return getTasksForCountry(countryId).length
 }
 
 const filteredCountries = computed(() => {
@@ -142,7 +145,7 @@ interface RouteDay {
 const routes = computed<RouteDay[]>(() => {
   if (!selectedCountry.value) return []
 
-  const countryTasks = allTasks.filter(t => t.country === selectedCountry.value)
+  const countryTasks = getTasksForCountry(selectedCountry.value)
   // Group tasks by city
   const cityMap = new Map<string, Task[]>()
   for (const task of countryTasks) {
