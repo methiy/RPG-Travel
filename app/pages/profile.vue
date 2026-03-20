@@ -127,6 +127,12 @@
       <span class="timeline-link-arrow">→</span>
     </NuxtLink>
 
+    <NuxtLink to="/settings" class="timeline-link">
+      <span class="timeline-link-icon">⚙️</span>
+      <span class="timeline-link-text">隐私设置</span>
+      <span class="timeline-link-arrow">→</span>
+    </NuxtLink>
+
     <!-- 区域 5：最近获得的勋章 -->
     <ClientOnly>
       <section class="section-card">

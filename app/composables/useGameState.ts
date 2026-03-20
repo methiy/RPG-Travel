@@ -1,20 +1,8 @@
 import type { GameState, LevelInfo } from '~/types'
 import { TASKS } from '~/data/tasks'
+import { LEVELS, AVATARS } from '~/data/levels'
 
 const STORAGE_KEY = 'travelrpg2'
-
-const LEVELS: { lv: number; title: string; need: number }[] = [
-  { lv: 1, title: '初级背包客', need: 100 },
-  { lv: 2, title: '资深旅行者', need: 250 },
-  { lv: 3, title: '环球探险家', need: 500 },
-  { lv: 4, title: '世界漫游者', need: 900 },
-  { lv: 5, title: '传奇旅行家', need: 1500 },
-  { lv: 6, title: '地球行者', need: 2500 },
-  { lv: 7, title: '星际旅人', need: 4000 },
-  { lv: 8, title: '宇宙漫游者', need: 99999 },
-]
-
-const AVATARS = ['✈️', '🌍', '🗺️', '🧳', '🏅', '🌟', '👑', '🚀']
 
 function loadLocalState(): GameState {
   if (import.meta.server) return { exp: 0, completed: [], medals: [] }

@@ -51,7 +51,9 @@
           </div>
           <div class="lb-info">
             <div class="lb-name">
-              {{ entry.displayName }}
+              <NuxtLink :to="`/user/${entry.userId}`" class="lb-name-link">
+                {{ entry.displayName }}
+              </NuxtLink>
               <span v-if="entry.userId === state.currentUserId" class="lb-you">你</span>
             </div>
             <div class="lb-sub">
@@ -238,6 +240,14 @@ onMounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.lb-name-link {
+  color: #fff;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.lb-name-link:hover {
+  color: var(--accent);
 }
 .lb-you {
   display: inline-block;

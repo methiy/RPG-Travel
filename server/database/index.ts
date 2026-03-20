@@ -1,10 +1,27 @@
 import { sql } from '@vercel/postgres'
 
+export interface PrivacySettings {
+  profile_public: boolean
+  show_stats: boolean
+  show_photos: boolean
+  show_medals: boolean
+  show_checkin_streak: boolean
+}
+
+export const DEFAULT_PRIVACY_SETTINGS: PrivacySettings = {
+  profile_public: true,
+  show_stats: true,
+  show_photos: true,
+  show_medals: true,
+  show_checkin_streak: true,
+}
+
 interface UserRecord {
   id: number
   username: string
   display_name: string
   password_hash: string
+  privacy_settings: PrivacySettings
   created_at: string
 }
 
@@ -88,6 +105,11 @@ async function initDB(): Promise<void> {
         PRIMARY KEY (user_id, photo_id)
       )
     `
+
+    // Add privacy_settings column if it doesn't exist
+    await sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS privacy_settings JSONB DEFAULT '{"profile_public":true,"show_stats":true,"show_photos":true,"show_medals":true,"show_checkin_streak":true}'
+    `
   } catch (err) {
     console.error('[initDB] Table creation failed:', err)
     // Still mark initialized to avoid infinite retry loops on every request
@@ -101,13 +123,33 @@ async function initDB(): Promise<void> {
 export async function findUserByUsername(username: string): Promise<UserRecord | undefined> {
   await initDB()
   const { rows } = await sql`SELECT * FROM users WHERE username = ${username} LIMIT 1`
-  return rows[0] as UserRecord | undefined
+  if (!rows[0]) return undefined
+  const row = rows[0] as Record<string, unknown>
+  return parseUserRow(row)
 }
 
 export async function findUserById(id: number): Promise<UserRecord | undefined> {
   await initDB()
   const { rows } = await sql`SELECT * FROM users WHERE id = ${id} LIMIT 1`
-  return rows[0] as UserRecord | undefined
+  if (!rows[0]) return undefined
+  const row = rows[0] as Record<string, unknown>
+  return parseUserRow(row)
+}
+
+function parseUserRow(row: Record<string, unknown>): UserRecord {
+  let privacy: PrivacySettings = { ...DEFAULT_PRIVACY_SETTINGS }
+  if (row.privacy_settings) {
+    const raw = typeof row.privacy_settings === 'string' ? JSON.parse(row.privacy_settings) : row.privacy_settings
+    privacy = { ...DEFAULT_PRIVACY_SETTINGS, ...raw }
+  }
+  return {
+    id: row.id as number,
+    username: row.username as string,
+    display_name: row.display_name as string,
+    password_hash: row.password_hash as string,
+    privacy_settings: privacy,
+    created_at: row.created_at as string,
+  }
 }
 
 export async function createUser(username: string, displayName: string, passwordHash: string): Promise<UserRecord> {
@@ -200,6 +242,28 @@ export async function updatePhotoComment(userId: number, photoId: number, commen
   return rows[0] as PhotoRecord | undefined
 }
 
+// ---- Privacy Settings API ----
+
+export async function updatePrivacySettings(userId: number, settings: Partial<PrivacySettings>): Promise<PrivacySettings> {
+  await initDB()
+  // Merge with defaults
+  const user = await findUserById(userId)
+  const current = user?.privacy_settings ?? { ...DEFAULT_PRIVACY_SETTINGS }
+  const merged: PrivacySettings = { ...current, ...settings }
+  const json = JSON.stringify(merged)
+  await sql`UPDATE users SET privacy_settings = ${json}::jsonb WHERE id = ${userId}`
+  return merged
+}
+
+/** Get user's photos (for public profile) - limited to recent N */
+export async function getUserPhotosLimited(userId: number, limit: number = 6): Promise<PhotoRecord[]> {
+  await initDB()
+  const { rows } = await sql`
+    SELECT * FROM checkin_photos WHERE user_id = ${userId} ORDER BY timestamp DESC LIMIT ${limit}
+  `
+  return rows as PhotoRecord[]
+}
+
 // ---- Leaderboard API ----
 
 export interface LeaderboardEntry {
@@ -269,6 +333,7 @@ export async function getLeaderboard(sortBy: 'exp' | 'completed' | 'medals' = 'e
 
 export interface PublicPhoto {
   id: number
+  userId: number
   displayName: string
   taskId: string
   dataUrl: string
@@ -284,7 +349,7 @@ export async function getPublicFeed(viewerUserId: number | null, limit: number =
   const vid = viewerUserId ?? 0
 
   const { rows } = await sql`
-    SELECT cp.id, u.display_name, cp.task_id, cp.data_url, cp.timestamp, cp.comment,
+    SELECT cp.id, cp.user_id, u.display_name, cp.task_id, cp.data_url, cp.timestamp, cp.comment,
            COALESCE(lc.cnt, 0) as likes,
            CASE WHEN ml.photo_id IS NOT NULL THEN true ELSE false END as liked_by_me
     FROM checkin_photos cp
@@ -297,6 +362,7 @@ export async function getPublicFeed(viewerUserId: number | null, limit: number =
 
   return (rows as Record<string, unknown>[]).map((row) => ({
     id: row.id as number,
+    userId: row.user_id as number,
     displayName: row.display_name as string,
     taskId: row.task_id as string,
     dataUrl: row.data_url as string,

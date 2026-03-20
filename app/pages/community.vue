@@ -16,9 +16,13 @@
       <div v-else class="feed-list">
         <div v-for="photo in photos" :key="photo.id" class="feed-card">
           <div class="feed-header">
-            <div class="feed-avatar">📷</div>
+            <NuxtLink :to="`/user/${photo.userId}`" class="feed-avatar-link">
+              <div class="feed-avatar">📷</div>
+            </NuxtLink>
             <div class="feed-user">
-              <div class="feed-name">{{ photo.displayName }}</div>
+              <NuxtLink :to="`/user/${photo.userId}`" class="feed-name-link">
+                <div class="feed-name">{{ photo.displayName }}</div>
+              </NuxtLink>
               <div class="feed-time">{{ formatTime(photo.timestamp) }}</div>
             </div>
           </div>
@@ -68,6 +72,7 @@ import { TASKS } from '~/data/tasks'
 
 interface FeedPhoto {
   id: number
+  userId: number
   displayName: string
   taskId: string
   dataUrl: string
@@ -197,6 +202,13 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 700;
   color: #fff;
+}
+.feed-name-link,
+.feed-avatar-link {
+  text-decoration: none;
+}
+.feed-name-link:hover .feed-name {
+  color: var(--accent);
 }
 .feed-time {
   font-size: 11px;
