@@ -6,7 +6,11 @@ export default defineEventHandler(async (event) => {
   const offset = Math.max(parseInt(query.offset as string) || 0, 0)
   const viewerUserId: number | null = event.context.user?.id ?? null
 
-  const photos = await getPublicFeed(viewerUserId, limit, offset)
-
-  return { photos }
+  try {
+    const photos = await getPublicFeed(viewerUserId, limit, offset)
+    return { photos }
+  } catch (err) {
+    console.error('[feed] Query failed:', err)
+    return { photos: [] }
+  }
 })

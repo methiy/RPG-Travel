@@ -33,60 +33,65 @@ let initialized = false
 async function initDB(): Promise<void> {
   if (initialized) return
 
-  await sql`
-    CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      username VARCHAR(20) UNIQUE NOT NULL,
-      display_name VARCHAR(20) NOT NULL,
-      password_hash TEXT NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    )
-  `
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(20) UNIQUE NOT NULL,
+        display_name VARCHAR(20) NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `
 
-  await sql`
-    CREATE TABLE IF NOT EXISTS game_progress (
-      user_id INTEGER PRIMARY KEY REFERENCES users(id),
-      exp INTEGER DEFAULT 0,
-      completed JSONB DEFAULT '[]',
-      medals JSONB DEFAULT '[]',
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    )
-  `
+    await sql`
+      CREATE TABLE IF NOT EXISTS game_progress (
+        user_id INTEGER PRIMARY KEY REFERENCES users(id),
+        exp INTEGER DEFAULT 0,
+        completed JSONB DEFAULT '[]',
+        medals JSONB DEFAULT '[]',
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `
 
-  await sql`
-    CREATE TABLE IF NOT EXISTS daily_checkins (
-      user_id INTEGER PRIMARY KEY REFERENCES users(id),
-      last_date DATE,
-      streak INTEGER DEFAULT 0,
-      total INTEGER DEFAULT 0,
-      max_streak INTEGER DEFAULT 0,
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    )
-  `
+    await sql`
+      CREATE TABLE IF NOT EXISTS daily_checkins (
+        user_id INTEGER PRIMARY KEY REFERENCES users(id),
+        last_date DATE,
+        streak INTEGER DEFAULT 0,
+        total INTEGER DEFAULT 0,
+        max_streak INTEGER DEFAULT 0,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `
 
-  await sql`
-    CREATE TABLE IF NOT EXISTS checkin_photos (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL REFERENCES users(id),
-      task_id VARCHAR(100) NOT NULL,
-      data_url TEXT NOT NULL,
-      timestamp BIGINT NOT NULL,
-      lat DOUBLE PRECISION,
-      lng DOUBLE PRECISION,
-      comment TEXT DEFAULT '',
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      UNIQUE(user_id, task_id)
-    )
-  `
+    await sql`
+      CREATE TABLE IF NOT EXISTS checkin_photos (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        task_id VARCHAR(100) NOT NULL,
+        data_url TEXT NOT NULL,
+        timestamp BIGINT NOT NULL,
+        lat DOUBLE PRECISION,
+        lng DOUBLE PRECISION,
+        comment TEXT DEFAULT '',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, task_id)
+      )
+    `
 
-  await sql`
-    CREATE TABLE IF NOT EXISTS photo_likes (
-      user_id INTEGER NOT NULL REFERENCES users(id),
-      photo_id INTEGER NOT NULL REFERENCES checkin_photos(id),
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      PRIMARY KEY (user_id, photo_id)
-    )
-  `
+    await sql`
+      CREATE TABLE IF NOT EXISTS photo_likes (
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        photo_id INTEGER NOT NULL REFERENCES checkin_photos(id),
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (user_id, photo_id)
+      )
+    `
+  } catch (err) {
+    console.error('[initDB] Table creation failed:', err)
+    // Still mark initialized to avoid infinite retry loops on every request
+  }
 
   initialized = true
 }
@@ -113,7 +118,10 @@ export async function createUser(username: string, displayName: string, password
     VALUES (${username}, ${displayName}, ${passwordHash})
     RETURNING *
   `
-  const user = rows[0] as UserRecord
+  const user = rows[0] as UserRecord | undefined
+  if (!user) {
+    throw new Error('Failed to create user: no row returned')
+  }
 
   // Create empty progress
   await sql`

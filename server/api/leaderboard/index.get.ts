@@ -11,10 +11,11 @@ export default defineEventHandler(async (event) => {
 
   const currentUserId: number | null = event.context.user?.id ?? null
 
-  const leaderboard = await getLeaderboard(sortBy, limit)
-
-  return {
-    leaderboard,
-    currentUserId,
+  try {
+    const leaderboard = await getLeaderboard(sortBy, limit)
+    return { leaderboard, currentUserId }
+  } catch (err) {
+    console.error('[leaderboard] Query failed:', err)
+    return { leaderboard: [], currentUserId }
   }
 })
