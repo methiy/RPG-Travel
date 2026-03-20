@@ -82,7 +82,7 @@
 import type { CheckinPhoto, Task } from '~/types'
 import { TASKS } from '~/data/tasks'
 
-const { getPhotos, updateComment } = usePhotoCheckin()
+const { photos, updateComment } = usePhotoCheckin()
 
 // Build a flat task lookup map
 const taskMap = computed(() => {
@@ -96,7 +96,7 @@ const taskMap = computed(() => {
 })
 
 const sortedPhotos = computed(() => {
-  return [...getPhotos()].sort((a, b) => b.timestamp - a.timestamp)
+  return [...photos.value].sort((a, b) => b.timestamp - a.timestamp)
 })
 
 function getTaskName(taskId: string): string {

@@ -84,8 +84,12 @@ async function handleLogin() {
     }
 
     // Migrate local photos to server and load server photos
-    await migrateLocalPhotosToServer()
-    await loadPhotosFromServer()
+    try {
+      await migrateLocalPhotosToServer()
+      await loadPhotosFromServer()
+    } catch {
+      // Photo migration failure should not block login
+    }
 
     await navigateTo('/')
   } catch (e: unknown) {

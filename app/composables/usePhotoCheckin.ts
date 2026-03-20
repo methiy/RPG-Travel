@@ -57,7 +57,7 @@ export function usePhotoCheckin() {
         // Update with server-assigned id
         const i = photos.value.findIndex(p => p.taskId === photo.taskId)
         if (i >= 0 && saved.id) {
-          photos.value[i] = { ...photos.value[i], id: saved.id }
+          photos.value[i] = { ...photos.value[i], id: saved.id } as CheckinPhoto
           saveLocalPhotos(photos.value)
         }
       } catch {

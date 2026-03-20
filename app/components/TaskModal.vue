@@ -74,7 +74,8 @@ async function onCheckin() {
         taskId: props.task.id,
         dataUrl,
         timestamp: Date.now(),
-        location: location ?? undefined,
+        lat: location?.lat,
+        lng: location?.lng,
       })
     } catch {
       // Storage full etc - continue without saving photo
