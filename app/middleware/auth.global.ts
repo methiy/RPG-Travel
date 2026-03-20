@@ -7,13 +7,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   const publicPages = ['/login', '/register']
-  const isPublic = publicPages.includes(to.path) || to.path.startsWith('/user/')
+  const isAuthPage = publicPages.includes(to.path)
+  const isPublic = isAuthPage || to.path.startsWith('/user/')
 
   if (!authState.value.user && !isPublic) {
     return navigateTo('/login')
   }
 
-  if (authState.value.user && isPublic) {
+  // Only redirect away from login/register, not from /user/ pages
+  if (authState.value.user && isAuthPage) {
     return navigateTo('/')
   }
 })
