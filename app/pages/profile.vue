@@ -109,6 +109,13 @@
         <div v-else class="empty-hint">还没有打卡照片，快去探索世界吧！</div>
       </section>
 
+      <!-- 区域 6.5：旅行时间线入口 -->
+      <NuxtLink to="/timeline" class="timeline-link">
+        <span class="timeline-link-icon">📅</span>
+        <span class="timeline-link-text">查看旅行时间线</span>
+        <span class="timeline-link-arrow">→</span>
+      </NuxtLink>
+
       <!-- 区域 7：退出登录 -->
       <section v-if="authState.user" class="logout-section">
         <button class="logout-btn" @click="logout">🚪 退出登录</button>
@@ -463,6 +470,36 @@ const recentPhotos = computed(() => {
   color: var(--muted);
   text-align: center;
   padding: 20px 0;
+}
+
+/* 时间线入口 */
+.timeline-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.timeline-link:hover {
+  border-color: var(--accent);
+  background: rgba(74, 158, 255, 0.04);
+}
+.timeline-link-icon {
+  font-size: 20px;
+}
+.timeline-link-text {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+.timeline-link-arrow {
+  font-size: 14px;
+  color: var(--accent);
 }
 
 /* 区域 7：退出登录 */
