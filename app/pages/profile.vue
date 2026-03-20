@@ -96,6 +96,13 @@
         <span class="timeline-link-arrow">→</span>
       </NuxtLink>
 
+      <!-- 区域 4.7：路线规划 -->
+      <NuxtLink to="/planner" class="timeline-link">
+        <span class="timeline-link-icon">🗺️</span>
+        <span class="timeline-link-text">路线规划器</span>
+        <span class="timeline-link-arrow">→</span>
+      </NuxtLink>
+
       <!-- 区域 5：最近获得的勋章 -->
       <section class="section-card">
         <div class="section-header">
