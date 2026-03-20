@@ -88,6 +88,14 @@
         <span class="timeline-link-arrow">→</span>
       </NuxtLink>
 
+      <!-- 区域 4.6：每周挑战 -->
+      <NuxtLink to="/challenges" class="timeline-link">
+        <span class="timeline-link-icon">📋</span>
+        <span class="timeline-link-text">每周挑战</span>
+        <span class="ach-badge">{{ challengeCompleted }}/3</span>
+        <span class="timeline-link-arrow">→</span>
+      </NuxtLink>
+
       <!-- 区域 5：最近获得的勋章 -->
       <section class="section-card">
         <div class="section-header">
@@ -147,6 +155,9 @@ const { authState, logout } = useAuth()
 const { state: checkinState } = useDailyCheckin()
 const { getPhotos } = usePhotoCheckin()
 const { unlockedCount: achUnlockedCount, totalCount: achTotalCount } = useAchievements()
+const { challenges: weeklyChallenges } = useWeeklyChallenges()
+
+const challengeCompleted = computed(() => weeklyChallenges.value.filter(c => c.isComplete).length)
 
 const allTasks = computed(() => Object.values(TASKS).flat())
 
