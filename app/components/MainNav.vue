@@ -27,4 +27,9 @@ const route = useRoute()
 }
 .navbtn.active { color: var(--accent); border-bottom-color: var(--accent); }
 .navbtn:hover { color: var(--text); }
+
+@media (max-width: 640px) {
+  .mainnav { position: sticky; top: 0; z-index: 99; }
+  .navbtn { padding: 10px 16px; font-size: 12px; }
+}
 </style>

@@ -94,4 +94,13 @@ function getCountries(continentId: string) {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
 }
+
+@media (max-width: 640px) {
+  .world-page { padding: 16px 12px; }
+  .world-header { margin-bottom: 16px; }
+  .world-header h2 { font-size: 20px; }
+  .continent-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .cont-title { font-size: 17px; }
+  .countries-grid { grid-template-columns: 1fr; gap: 12px; }
+}
 </style>

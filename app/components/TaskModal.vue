@@ -489,4 +489,18 @@ function formatTime(ts: number) {
   color: var(--text);
   border-color: var(--text);
 }
+
+@media (max-width: 640px) {
+  .task-modal-overlay { align-items: flex-end; }
+  .task-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: 16px 16px 0 0;
+  }
+  .task-modal-overlay.show .task-modal { transform: scale(1); }
+  .tm-banner { border-radius: 16px 16px 0 0; height: 64px; }
+  .tm-body { padding: 16px; }
+  .tm-title { font-size: 18px; }
+}
 </style>

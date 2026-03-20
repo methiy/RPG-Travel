@@ -202,4 +202,11 @@ function onComplete(mode: 'checkin' | 'virtual', expMultiplier: number) {
   color: var(--muted);
   font-size: 16px;
 }
+
+@media (max-width: 640px) {
+  .country-page { padding: 16px 12px; }
+  .city-tab { padding: 10px 18px; font-size: 14px; }
+  .tasks-grid { grid-template-columns: 1fr; gap: 12px; }
+  .empty-state { padding: 32px 16px; }
+}
 </style>

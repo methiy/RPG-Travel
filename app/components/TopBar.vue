@@ -123,4 +123,24 @@ const { authState, logout } = useAuth()
 .logout-btn:hover {
   background: var(--border);
 }
+
+@media (max-width: 640px) {
+  .topbar { padding: 10px 12px; gap: 10px; }
+  .logo { font-size: 15px; }
+  .avatar { width: 32px; height: 32px; font-size: 14px; }
+  .player-name { font-size: 12px; }
+  .player-title { font-size: 10px; }
+  .exp-wrap { min-width: 0; flex-basis: 100%; order: 10; }
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    flex-basis: 100%;
+    order: 11;
+  }
+  .stat { padding: 4px 8px; }
+  .stat-v { font-size: 15px; }
+  .stat-l { font-size: 9px; }
+  .logout-btn { padding: 4px 10px; font-size: 14px; }
+}
 </style>

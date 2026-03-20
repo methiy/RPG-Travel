@@ -99,4 +99,12 @@ const games = [
   transition: all .2s;
 }
 .back-btn:hover { color: var(--text); border-color: var(--text) }
+
+@media (max-width: 640px) {
+  .games-page { padding: 16px 12px; }
+  .games-page h2 { font-size: 19px; }
+  .games-grid { grid-template-columns: 1fr; gap: 12px; }
+  .game-card { padding: 18px; }
+  .game-icon { font-size: 36px; margin-bottom: 8px; }
+}
 </style>

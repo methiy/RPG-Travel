@@ -235,4 +235,10 @@ function spin() {
   from { opacity: 0; transform: translateY(10px) }
   to { opacity: 1; transform: translateY(0) }
 }
+
+@media (max-width: 640px) {
+  .game-panel { padding: 16px; }
+  .roulette-wheel { width: min(260px, 70vw); height: min(260px, 70vw); }
+  .result-dest { font-size: 20px; }
+}
 </style>

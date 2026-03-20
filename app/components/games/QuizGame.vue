@@ -264,4 +264,10 @@ function restart() {
   from { opacity: 0; transform: translateY(10px) }
   to { opacity: 1; transform: translateY(0) }
 }
+
+@media (max-width: 640px) {
+  .game-panel { padding: 16px; }
+  .quiz-question { font-size: 15px; min-height: auto; margin-bottom: 16px; }
+  .quiz-opt { padding: 12px 14px; font-size: 13px; }
+}
 </style>

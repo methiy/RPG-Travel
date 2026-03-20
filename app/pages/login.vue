@@ -143,4 +143,12 @@ async function handleLogin() {
 .auth-footer { text-align: center; margin-top: 24px; font-size: 13px; color: var(--muted); }
 .auth-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
 .auth-footer a:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .auth-page { padding: 16px; }
+  .auth-card { padding: 24px 20px; }
+  .auth-header { margin-bottom: 24px; }
+  .auth-logo { font-size: 40px; }
+  .auth-header h1 { font-size: 20px; }
+}
 </style>

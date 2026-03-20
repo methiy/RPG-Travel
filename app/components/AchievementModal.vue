@@ -47,4 +47,11 @@ const { visible, data, close } = useAchievement()
   color: #fff; border: none; border-radius: 8px;
   font-size: 15px; font-weight: 700; cursor: pointer;
 }
+
+@media (max-width: 640px) {
+  .ach-modal { padding: 24px 20px; }
+  .ach-icon { font-size: 56px; margin-bottom: 12px; }
+  .ach-title { font-size: 18px; }
+  .ach-exp { font-size: 22px; }
+}
 </style>

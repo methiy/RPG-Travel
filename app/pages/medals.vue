@@ -94,4 +94,11 @@ const displayedMedals = computed(() => {
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 12px;
 }
+
+@media (max-width: 640px) {
+  .medals-page { padding: 16px 12px; }
+  .medals-page h2 { font-size: 19px; }
+  .mf-btn { padding: 8px 16px; font-size: 13px; }
+  .medals-grid { gap: 8px; }
+}
 </style>

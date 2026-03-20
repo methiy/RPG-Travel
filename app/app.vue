@@ -49,4 +49,9 @@ body {
 
 /* Empty state */
 .empty { text-align: center; padding: 40px; color: var(--muted); }
+
+/* Mobile adaptation */
+@media (max-width: 640px) {
+  .empty { padding: 24px 16px; }
+}
 </style>
