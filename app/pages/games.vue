@@ -15,6 +15,12 @@
     </template>
 
     <div v-else class="games-grid">
+      <NuxtLink to="/duel" class="game-card duel-card">
+        <div class="game-icon">⚔️</div>
+        <div class="game-title">PK 对战</div>
+        <div class="game-desc">限时答题 PK，挑战虚拟旅行者，赢取丰厚经验！</div>
+        <div class="game-reward">🏆 获胜 +30 EXP 奖励</div>
+      </NuxtLink>
       <div
         v-for="game in games"
         :key="game.id"
@@ -69,6 +75,11 @@ const games = [
   border-color: var(--accent);
   transform: translateY(-4px);
   box-shadow: 0 10px 28px rgba(74, 158, 255, .2);
+}
+.duel-card {
+  text-decoration: none;
+  background: linear-gradient(135deg, rgba(74, 158, 255, 0.08), rgba(108, 92, 231, 0.06));
+  border-color: rgba(74, 158, 255, 0.3);
 }
 
 .game-icon { font-size: 48px; margin-bottom: 12px }
