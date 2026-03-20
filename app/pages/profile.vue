@@ -1,8 +1,8 @@
 <template>
   <div class="profile-page">
-    <ClientOnly>
-      <!-- 区域 1：档案头部 -->
-      <section class="profile-header">
+    <!-- 区域 1：档案头部 -->
+    <section class="profile-header">
+      <ClientOnly>
         <div class="header-avatar">{{ avatar }}</div>
         <div class="header-info">
           <div class="header-name">{{ authState.user?.displayName || '旅行者' }}</div>
@@ -20,9 +20,18 @@
         <div class="header-streak">
           🔥 连续签到 <strong>{{ checkinState.streak }}</strong> 天
         </div>
-      </section>
+        <template #fallback>
+          <div class="header-avatar">✈️</div>
+          <div class="header-info">
+            <div class="header-name">旅行者</div>
+            <div class="header-title">初级背包客</div>
+          </div>
+        </template>
+      </ClientOnly>
+    </section>
 
-      <!-- 区域 2：核心数据卡片 -->
+    <!-- 区域 2：核心数据卡片 -->
+    <ClientOnly>
       <section class="stats-grid">
         <div class="stat-card">
           <div class="stat-value">{{ completedCount }}<span class="stat-total">/{{ totalTasks }}</span></div>
@@ -49,8 +58,10 @@
           <div class="stat-label">最高连续签到</div>
         </div>
       </section>
+    </ClientOnly>
 
-      <!-- 区域 3：大洲探索进度 -->
+    <!-- 区域 3：大洲探索进度 -->
+    <ClientOnly>
       <section class="section-card">
         <h3 class="section-title">🌍 大洲探索进度</h3>
         <div class="continent-list">
@@ -65,8 +76,10 @@
           </div>
         </div>
       </section>
+    </ClientOnly>
 
-      <!-- 区域 4：难度分布 -->
+    <!-- 区域 4：难度分布 -->
+    <ClientOnly>
       <section class="section-card">
         <h3 class="section-title">📊 难度分布</h3>
         <div class="difficulty-list">
@@ -79,45 +92,43 @@
           </div>
         </div>
       </section>
+    </ClientOnly>
 
-      <!-- 区域 4.5：成就进度 -->
-      <NuxtLink to="/achievements" class="timeline-link">
-        <span class="timeline-link-icon">🏆</span>
-        <span class="timeline-link-text">旅行成就</span>
-        <span class="ach-badge">{{ achUnlockedCount }}/{{ achTotalCount }}</span>
-        <span class="timeline-link-arrow">→</span>
-      </NuxtLink>
+    <!-- 快捷入口 -->
+    <NuxtLink to="/achievements" class="timeline-link">
+      <span class="timeline-link-icon">🏆</span>
+      <span class="timeline-link-text">旅行成就</span>
+      <ClientOnly><span class="ach-badge">{{ achUnlockedCount }}/{{ achTotalCount }}</span></ClientOnly>
+      <span class="timeline-link-arrow">→</span>
+    </NuxtLink>
 
-      <!-- 区域 4.6：每周挑战 -->
-      <NuxtLink to="/challenges" class="timeline-link">
-        <span class="timeline-link-icon">📋</span>
-        <span class="timeline-link-text">每周挑战</span>
-        <span class="ach-badge">{{ challengeCompleted }}/3</span>
-        <span class="timeline-link-arrow">→</span>
-      </NuxtLink>
+    <NuxtLink to="/challenges" class="timeline-link">
+      <span class="timeline-link-icon">📋</span>
+      <span class="timeline-link-text">每周挑战</span>
+      <ClientOnly><span class="ach-badge">{{ challengeCompleted }}/3</span></ClientOnly>
+      <span class="timeline-link-arrow">→</span>
+    </NuxtLink>
 
-      <!-- 区域 4.7：路线规划 -->
-      <NuxtLink to="/planner" class="timeline-link">
-        <span class="timeline-link-icon">🗺️</span>
-        <span class="timeline-link-text">路线规划器</span>
-        <span class="timeline-link-arrow">→</span>
-      </NuxtLink>
+    <NuxtLink to="/planner" class="timeline-link">
+      <span class="timeline-link-icon">🗺️</span>
+      <span class="timeline-link-text">路线规划器</span>
+      <span class="timeline-link-arrow">→</span>
+    </NuxtLink>
 
-      <!-- 区域 4.8：目的地天气 -->
-      <NuxtLink to="/weather" class="timeline-link">
-        <span class="timeline-link-icon">🌤️</span>
-        <span class="timeline-link-text">目的地天气</span>
-        <span class="timeline-link-arrow">→</span>
-      </NuxtLink>
+    <NuxtLink to="/weather" class="timeline-link">
+      <span class="timeline-link-icon">🌤️</span>
+      <span class="timeline-link-text">目的地天气</span>
+      <span class="timeline-link-arrow">→</span>
+    </NuxtLink>
 
-      <!-- 区域 4.9：照片社区 -->
-      <NuxtLink to="/community" class="timeline-link">
-        <span class="timeline-link-icon">📸</span>
-        <span class="timeline-link-text">照片社区</span>
-        <span class="timeline-link-arrow">→</span>
-      </NuxtLink>
+    <NuxtLink to="/community" class="timeline-link">
+      <span class="timeline-link-icon">📸</span>
+      <span class="timeline-link-text">照片社区</span>
+      <span class="timeline-link-arrow">→</span>
+    </NuxtLink>
 
-      <!-- 区域 5：最近获得的勋章 -->
+    <!-- 区域 5：最近获得的勋章 -->
+    <ClientOnly>
       <section class="section-card">
         <div class="section-header">
           <h3 class="section-title">🏅 最近获得的勋章</h3>
@@ -131,8 +142,10 @@
         </div>
         <div v-else class="empty-hint">还没有获得勋章，快去完成任务吧！</div>
       </section>
+    </ClientOnly>
 
-      <!-- 区域 6：最近打卡照片 -->
+    <!-- 区域 6：最近打卡照片 -->
+    <ClientOnly>
       <section class="section-card">
         <div class="section-header">
           <h3 class="section-title">📷 最近打卡照片</h3>
@@ -145,22 +158,20 @@
         </div>
         <div v-else class="empty-hint">还没有打卡照片，快去探索世界吧！</div>
       </section>
+    </ClientOnly>
 
-      <!-- 区域 6.5：旅行时间线入口 -->
-      <NuxtLink to="/timeline" class="timeline-link">
-        <span class="timeline-link-icon">📅</span>
-        <span class="timeline-link-text">查看旅行时间线</span>
-        <span class="timeline-link-arrow">→</span>
-      </NuxtLink>
+    <!-- 旅行时间线入口 -->
+    <NuxtLink to="/timeline" class="timeline-link">
+      <span class="timeline-link-icon">📅</span>
+      <span class="timeline-link-text">查看旅行时间线</span>
+      <span class="timeline-link-arrow">→</span>
+    </NuxtLink>
 
-      <!-- 区域 7：退出登录 -->
+    <!-- 退出登录 -->
+    <ClientOnly>
       <section v-if="authState.user" class="logout-section">
         <button class="logout-btn" @click="logout">🚪 退出登录</button>
       </section>
-
-      <template #fallback>
-        <div class="loading-placeholder">加载中...</div>
-      </template>
     </ClientOnly>
   </div>
 </template>
@@ -573,13 +584,6 @@ const recentPhotos = computed(() => {
 .logout-btn:hover {
   background: rgba(231, 76, 60, 0.1);
   border-color: #e74c3c;
-}
-
-.loading-placeholder {
-  text-align: center;
-  color: var(--muted);
-  padding: 60px 0;
-  font-size: 14px;
 }
 
 /* 响应式 */

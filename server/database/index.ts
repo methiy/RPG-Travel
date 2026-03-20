@@ -308,10 +308,28 @@ interface DailyCheckinRecord {
   updated_at: string
 }
 
+/** Normalize Postgres DATE to 'YYYY-MM-DD' string */
+function normalizeDateStr(d: unknown): string | null {
+  if (!d) return null
+  if (d instanceof Date) return d.toISOString().slice(0, 10)
+  const s = String(d)
+  // Handle "2026-03-20T00:00:00.000Z" or "2026-03-20"
+  return s.slice(0, 10)
+}
+
 export async function getDailyCheckin(userId: number): Promise<DailyCheckinRecord | undefined> {
   await initDB()
   const { rows } = await sql`SELECT * FROM daily_checkins WHERE user_id = ${userId} LIMIT 1`
-  return rows[0] as DailyCheckinRecord | undefined
+  if (!rows[0]) return undefined
+  const row = rows[0] as Record<string, unknown>
+  return {
+    user_id: row.user_id as number,
+    last_date: normalizeDateStr(row.last_date),
+    streak: row.streak as number,
+    total: row.total as number,
+    max_streak: row.max_streak as number,
+    updated_at: row.updated_at as string,
+  }
 }
 
 export async function recordDailyCheckin(userId: number): Promise<{
