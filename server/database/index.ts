@@ -54,6 +54,17 @@ async function initDB(): Promise<void> {
   `
 
   await sql`
+    CREATE TABLE IF NOT EXISTS daily_checkins (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id),
+      last_date DATE,
+      streak INTEGER DEFAULT 0,
+      total INTEGER DEFAULT 0,
+      max_streak INTEGER DEFAULT 0,
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `
+
+  await sql`
     CREATE TABLE IF NOT EXISTS checkin_photos (
       id SERIAL PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES users(id),
@@ -170,4 +181,58 @@ export async function updatePhotoComment(userId: number, photoId: number, commen
     RETURNING *
   `
   return rows[0] as PhotoRecord | undefined
+}
+
+// ---- Daily Checkin API ----
+
+interface DailyCheckinRecord {
+  user_id: number
+  last_date: string | null
+  streak: number
+  total: number
+  max_streak: number
+  updated_at: string
+}
+
+export async function getDailyCheckin(userId: number): Promise<DailyCheckinRecord | undefined> {
+  await initDB()
+  const { rows } = await sql`SELECT * FROM daily_checkins WHERE user_id = ${userId} LIMIT 1`
+  return rows[0] as DailyCheckinRecord | undefined
+}
+
+export async function recordDailyCheckin(userId: number): Promise<{
+  alreadyDone: boolean
+  streak: number
+  total: number
+  maxStreak: number
+}> {
+  await initDB()
+
+  const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+
+  const existing = await getDailyCheckin(userId)
+
+  if (existing && existing.last_date === today) {
+    return { alreadyDone: true, streak: existing.streak, total: existing.total, maxStreak: existing.max_streak }
+  }
+
+  let newStreak: number
+  if (existing && existing.last_date === yesterday) {
+    newStreak = existing.streak + 1
+  } else {
+    newStreak = 1
+  }
+
+  const newTotal = (existing?.total ?? 0) + 1
+  const newMaxStreak = Math.max(existing?.max_streak ?? 0, newStreak)
+
+  await sql`
+    INSERT INTO daily_checkins (user_id, last_date, streak, total, max_streak, updated_at)
+    VALUES (${userId}, ${today}, ${newStreak}, ${newTotal}, ${newMaxStreak}, NOW())
+    ON CONFLICT (user_id)
+    DO UPDATE SET last_date = ${today}, streak = ${newStreak}, total = ${newTotal}, max_streak = ${newMaxStreak}, updated_at = NOW()
+  `
+
+  return { alreadyDone: false, streak: newStreak, total: newTotal, maxStreak: newMaxStreak }
 }

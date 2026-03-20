@@ -20,6 +20,7 @@ function getCountries(continentId: string) {
       <p>选择一个国家开始你的旅行冒险——完成任务积累EXP解锁更多大洲</p>
     </div>
     <ClientOnly>
+      <DailyCheckin />
       <div v-for="cont in CONTINENTS" :key="cont.id" class="continent-section">
         <div class="continent-header" :class="{ locked: isContLocked(cont) }">
           <div class="cont-info">
