@@ -184,10 +184,35 @@ import { COUNTRIES } from '~/data/countries'
 
 const { state: gameState, levelInfo, avatar, completedCount, medalCount, countriesCount } = useGameState()
 const { authState, logout } = useAuth()
-const { state: checkinState } = useDailyCheckin()
 const { getPhotos } = usePhotoCheckin()
-const { unlockedCount: achUnlockedCount, totalCount: achTotalCount } = useAchievements()
-const { challenges: weeklyChallenges } = useWeeklyChallenges()
+
+// These composables have deep dependency chains — protect against init failures
+let checkinState = ref({ streak: 0, total: 0, maxStreak: 0, lastDate: null as string | null })
+try {
+  const dc = useDailyCheckin()
+  checkinState = dc.state as typeof checkinState
+} catch {
+  // fallback to defaults
+}
+
+let achUnlockedCount = ref(0)
+let achTotalCount = 0
+try {
+  const ach = useAchievements()
+  achUnlockedCount = ach.unlockedCount as typeof achUnlockedCount
+  achTotalCount = ach.totalCount
+} catch {
+  // fallback
+}
+
+// useWeeklyChallenges may fail during initialization, protect profile page
+let weeklyChallenges = ref<{ isComplete: boolean }[]>([])
+try {
+  const wc = useWeeklyChallenges()
+  weeklyChallenges = computed(() => wc.challenges.value) as typeof weeklyChallenges
+} catch {
+  // Silently fail — challenges badge will show 0/3
+}
 
 const challengeCompleted = computed(() => weeklyChallenges.value.filter(c => c.isComplete).length)
 
