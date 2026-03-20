@@ -30,50 +30,76 @@ function saveLocalState(state: GameState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
 }
 
-let syncTimeout: ReturnType<typeof setTimeout> | null = null
-
-async function syncToServer(state: GameState) {
-  try {
-    await $fetch('/api/progress', {
-      method: 'PUT',
-      body: { exp: state.exp, completed: state.completed, medals: state.medals },
-    })
-  } catch {
-    // Silently fail — localStorage has the backup
-  }
-}
-
 export function useGameState() {
   const state = useState<GameState>('game-state', () => loadLocalState())
   const { isLoggedIn } = useAuth()
 
+  // Dirty flag: set when local state has unsaved changes
+  // Prevents loadFromServer from overwriting local changes
+  const dirty = useState<boolean>('game-state-dirty', () => false)
+
+  // Single sync promise to prevent concurrent PUT requests
+  let syncPromise: Promise<void> | null = null
+  let syncTimeout: ReturnType<typeof setTimeout> | null = null
+
+  async function syncToServer() {
+    // Take a snapshot of current state to send
+    const snapshot: GameState = {
+      exp: state.value.exp,
+      completed: [...state.value.completed],
+      medals: [...state.value.medals],
+    }
+    try {
+      await $fetch('/api/progress', {
+        method: 'PUT',
+        body: snapshot,
+      })
+      dirty.value = false
+    } catch {
+      // Silently fail — localStorage has the backup
+    }
+  }
+
+  function scheduleSyncToServer() {
+    if (!isLoggedIn.value) return
+    if (syncTimeout) clearTimeout(syncTimeout)
+    syncTimeout = setTimeout(() => {
+      // Chain syncs to avoid concurrent PUT requests
+      if (syncPromise) {
+        syncPromise = syncPromise.then(() => syncToServer())
+      } else {
+        syncPromise = syncToServer().finally(() => { syncPromise = null })
+      }
+    }, 300)
+  }
+
   if (import.meta.client) {
     onNuxtReady(async () => {
-      // If logged in, load from server; otherwise fall back to localStorage
-      if (isLoggedIn.value) {
+      // Only load from server if no local unsaved changes
+      if (isLoggedIn.value && !dirty.value) {
         await loadFromServer()
-      } else {
-        const loaded = loadLocalState()
-        state.value = loaded
       }
     })
 
     watch(state, (val) => {
-      // Always save to localStorage as cache
+      // Always save to localStorage immediately
       saveLocalState(val)
 
-      // Debounced sync to server when logged in
-      if (isLoggedIn.value) {
-        if (syncTimeout) clearTimeout(syncTimeout)
-        syncTimeout = setTimeout(() => syncToServer(val), 500)
-      }
+      // Schedule debounced sync to server
+      scheduleSyncToServer()
     }, { deep: true })
   }
 
   /** Load progress from server (call after login) */
   async function loadFromServer() {
+    // Don't overwrite unsaved local changes
+    if (dirty.value) return
+
     try {
       const data = await $fetch('/api/progress')
+      // Double-check dirty flag — user may have acted while request was in flight
+      if (dirty.value) return
+
       state.value = {
         exp: data.exp,
         completed: data.completed,
@@ -103,6 +129,7 @@ export function useGameState() {
         body: { exp: local.exp, completed: local.completed, medals: local.medals },
       })
       state.value = local
+      dirty.value = false
     } catch {
       // Keep local data if upload fails
     }
@@ -135,32 +162,23 @@ export function useGameState() {
 
   function completeTask(taskId: string, exp: number, medalId: string) {
     if (state.value.completed.includes(taskId)) return
+    dirty.value = true
     state.value.completed.push(taskId)
     state.value.exp += exp
     if (!state.value.medals.includes(medalId)) {
       state.value.medals.push(medalId)
     }
-    // Immediately persist to server (don't rely on debounced sync)
-    if (isLoggedIn.value) {
-      syncToServer(state.value)
-    }
   }
 
   function addExp(amount: number) {
+    dirty.value = true
     state.value.exp += amount
-    // Immediately persist to server
-    if (isLoggedIn.value) {
-      syncToServer(state.value)
-    }
   }
 
   function addMedal(medalId: string) {
     if (!state.value.medals.includes(medalId)) {
+      dirty.value = true
       state.value.medals.push(medalId)
-      // Immediately persist to server
-      if (isLoggedIn.value) {
-        syncToServer(state.value)
-      }
     }
   }
 

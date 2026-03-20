@@ -30,8 +30,9 @@ function saveLocal(state: CheckinState) {
 export function useDailyCheckin() {
   const state = useState<CheckinState>('daily-checkin', () => loadLocal())
   const { isLoggedIn } = useAuth()
-  const { addExp, addMedal, loadFromServer: reloadGameState } = useGameState()
+  const { addExp, addMedal, loadFromServer: reloadGameState, state: gameState } = useGameState()
   const { show } = useAchievement()
+  const dirty = useState<boolean>('game-state-dirty')
 
   const checkedToday = computed(() => state.value.lastDate === getTodayStr())
 
@@ -92,6 +93,7 @@ export function useDailyCheckin() {
 
         // Server already persisted EXP + medal to game_progress,
         // reload from server to get the authoritative state
+        dirty.value = false
         await reloadGameState()
 
         if (res.milestone) {
