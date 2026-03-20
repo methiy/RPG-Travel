@@ -25,25 +25,28 @@ function loadLocalState(): GameState {
   return { exp: 0, completed: [], medals: [] }
 }
 
-function saveLocalState(state: GameState) {
+function saveLocalState(s: GameState) {
   if (import.meta.server) return
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s))
+}
+
+/** Merge local and server state: pick whichever has more progress */
+function mergeStates(local: GameState, server: GameState): GameState {
+  // Use the one with higher exp as base, then union completed/medals
+  const mergedCompleted = [...new Set([...local.completed, ...server.completed])]
+  const mergedMedals = [...new Set([...local.medals, ...server.medals])]
+  const mergedExp = Math.max(local.exp, server.exp)
+  return { exp: mergedExp, completed: mergedCompleted, medals: mergedMedals }
 }
 
 export function useGameState() {
   const state = useState<GameState>('game-state', () => loadLocalState())
   const { isLoggedIn } = useAuth()
 
-  // Dirty flag: set when local state has unsaved changes
-  // Prevents loadFromServer from overwriting local changes
-  const dirty = useState<boolean>('game-state-dirty', () => false)
-
-  // Single sync promise to prevent concurrent PUT requests
+  // Sync queue: only one PUT in flight at a time
   let syncPromise: Promise<void> | null = null
-  let syncTimeout: ReturnType<typeof setTimeout> | null = null
 
-  async function syncToServer() {
-    // Take a snapshot of current state to send
+  async function syncToServer(): Promise<void> {
     const snapshot: GameState = {
       exp: state.value.exp,
       completed: [...state.value.completed],
@@ -54,52 +57,90 @@ export function useGameState() {
         method: 'PUT',
         body: snapshot,
       })
-      dirty.value = false
     } catch {
       // Silently fail — localStorage has the backup
     }
   }
 
-  function scheduleSyncToServer() {
+  /** Queue a sync — waits for any in-flight sync to finish first */
+  function queueSync() {
     if (!isLoggedIn.value) return
-    if (syncTimeout) clearTimeout(syncTimeout)
-    syncTimeout = setTimeout(() => {
-      // Chain syncs to avoid concurrent PUT requests
-      if (syncPromise) {
-        syncPromise = syncPromise.then(() => syncToServer())
-      } else {
-        syncPromise = syncToServer().finally(() => { syncPromise = null })
-      }
-    }, 300)
+    if (syncPromise) {
+      syncPromise = syncPromise.then(() => syncToServer())
+    } else {
+      syncPromise = syncToServer().finally(() => { syncPromise = null })
+    }
   }
 
   if (import.meta.client) {
+    // On app ready: merge local + server data (neither side blindly wins)
     onNuxtReady(async () => {
-      // Only load from server if no local unsaved changes
-      if (isLoggedIn.value && !dirty.value) {
-        await loadFromServer()
+      if (isLoggedIn.value) {
+        try {
+          const serverData = await $fetch('/api/progress')
+          const local = loadLocalState()
+          const merged = mergeStates(local, {
+            exp: serverData.exp,
+            completed: serverData.completed,
+            medals: serverData.medals,
+          })
+          state.value = merged
+          saveLocalState(merged)
+          // Push merged result back to server if local had extra data
+          if (merged.exp > serverData.exp
+            || merged.completed.length > serverData.completed.length
+            || merged.medals.length > serverData.medals.length) {
+            queueSync()
+          }
+        } catch {
+          // Server unreachable — keep localStorage data
+          state.value = loadLocalState()
+        }
+      } else {
+        state.value = loadLocalState()
       }
     })
 
+    // Watch for changes: save to localStorage immediately, sync on debounce
+    let syncTimeout: ReturnType<typeof setTimeout> | null = null
     watch(state, (val) => {
-      // Always save to localStorage immediately
       saveLocalState(val)
-
-      // Schedule debounced sync to server
-      scheduleSyncToServer()
+      if (isLoggedIn.value) {
+        if (syncTimeout) clearTimeout(syncTimeout)
+        syncTimeout = setTimeout(() => queueSync(), 300)
+      }
     }, { deep: true })
+
+    // Flush pending sync on page unload so data is never lost
+    window.addEventListener('beforeunload', () => {
+      if (syncTimeout) {
+        clearTimeout(syncTimeout)
+      }
+      // Use fetch with keepalive for reliable delivery during unload
+      if (isLoggedIn.value) {
+        const snapshot = JSON.stringify({
+          exp: state.value.exp,
+          completed: state.value.completed,
+          medals: state.value.medals,
+        })
+        try {
+          fetch('/api/progress', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: snapshot,
+            keepalive: true,
+          })
+        } catch {
+          // Last resort — data is still in localStorage
+        }
+      }
+    })
   }
 
   /** Load progress from server (call after login) */
   async function loadFromServer() {
-    // Don't overwrite unsaved local changes
-    if (dirty.value) return
-
     try {
       const data = await $fetch('/api/progress')
-      // Double-check dirty flag — user may have acted while request was in flight
-      if (dirty.value) return
-
       state.value = {
         exp: data.exp,
         completed: data.completed,
@@ -129,7 +170,6 @@ export function useGameState() {
         body: { exp: local.exp, completed: local.completed, medals: local.medals },
       })
       state.value = local
-      dirty.value = false
     } catch {
       // Keep local data if upload fails
     }
@@ -162,7 +202,6 @@ export function useGameState() {
 
   function completeTask(taskId: string, exp: number, medalId: string) {
     if (state.value.completed.includes(taskId)) return
-    dirty.value = true
     state.value.completed.push(taskId)
     state.value.exp += exp
     if (!state.value.medals.includes(medalId)) {
@@ -171,13 +210,11 @@ export function useGameState() {
   }
 
   function addExp(amount: number) {
-    dirty.value = true
     state.value.exp += amount
   }
 
   function addMedal(medalId: string) {
     if (!state.value.medals.includes(medalId)) {
-      dirty.value = true
       state.value.medals.push(medalId)
     }
   }
