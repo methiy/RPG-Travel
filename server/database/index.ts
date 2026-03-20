@@ -79,6 +79,15 @@ async function initDB(): Promise<void> {
     )
   `
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS photo_likes (
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      photo_id INTEGER NOT NULL REFERENCES checkin_photos(id),
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (user_id, photo_id)
+    )
+  `
+
   initialized = true
 }
 
@@ -197,26 +206,48 @@ export interface LeaderboardEntry {
 export async function getLeaderboard(sortBy: 'exp' | 'completed' | 'medals' = 'exp', limit: number = 50): Promise<LeaderboardEntry[]> {
   await initDB()
 
-  const orderClause = sortBy === 'completed'
-    ? 'jsonb_array_length(gp.completed)'
-    : sortBy === 'medals'
-      ? 'jsonb_array_length(gp.medals)'
-      : 'gp.exp'
+  // Use separate queries for each sort type since template literals don't support dynamic ORDER BY
+  let rows: Record<string, unknown>[]
 
-  // Use raw query since we need dynamic ORDER BY
-  const { rows } = await sql.query(
-    `SELECT u.id as user_id, u.display_name, gp.exp,
-            jsonb_array_length(gp.completed) as completed_count,
-            jsonb_array_length(gp.medals) as medal_count
-     FROM users u
-     JOIN game_progress gp ON u.id = gp.user_id
-     WHERE gp.exp > 0
-     ORDER BY ${orderClause} DESC, gp.exp DESC
-     LIMIT $1`,
-    [limit],
-  )
+  if (sortBy === 'completed') {
+    const result = await sql`
+      SELECT u.id as user_id, u.display_name, gp.exp,
+             jsonb_array_length(gp.completed) as completed_count,
+             jsonb_array_length(gp.medals) as medal_count
+      FROM users u
+      JOIN game_progress gp ON u.id = gp.user_id
+      WHERE gp.exp > 0
+      ORDER BY jsonb_array_length(gp.completed) DESC, gp.exp DESC
+      LIMIT ${limit}
+    `
+    rows = result.rows as Record<string, unknown>[]
+  } else if (sortBy === 'medals') {
+    const result = await sql`
+      SELECT u.id as user_id, u.display_name, gp.exp,
+             jsonb_array_length(gp.completed) as completed_count,
+             jsonb_array_length(gp.medals) as medal_count
+      FROM users u
+      JOIN game_progress gp ON u.id = gp.user_id
+      WHERE gp.exp > 0
+      ORDER BY jsonb_array_length(gp.medals) DESC, gp.exp DESC
+      LIMIT ${limit}
+    `
+    rows = result.rows as Record<string, unknown>[]
+  } else {
+    const result = await sql`
+      SELECT u.id as user_id, u.display_name, gp.exp,
+             jsonb_array_length(gp.completed) as completed_count,
+             jsonb_array_length(gp.medals) as medal_count
+      FROM users u
+      JOIN game_progress gp ON u.id = gp.user_id
+      WHERE gp.exp > 0
+      ORDER BY gp.exp DESC
+      LIMIT ${limit}
+    `
+    rows = result.rows as Record<string, unknown>[]
+  }
 
-  return rows.map((row: Record<string, unknown>, idx: number) => ({
+  return rows.map((row, idx) => ({
     rank: idx + 1,
     userId: row.user_id as number,
     displayName: row.display_name as string,
@@ -242,30 +273,21 @@ export interface PublicPhoto {
 export async function getPublicFeed(viewerUserId: number | null, limit: number = 30, offset: number = 0): Promise<PublicPhoto[]> {
   await initDB()
 
-  // Ensure likes table exists
-  await sql`
-    CREATE TABLE IF NOT EXISTS photo_likes (
-      user_id INTEGER NOT NULL REFERENCES users(id),
-      photo_id INTEGER NOT NULL REFERENCES checkin_photos(id),
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      PRIMARY KEY (user_id, photo_id)
-    )
+  const vid = viewerUserId ?? 0
+
+  const { rows } = await sql`
+    SELECT cp.id, u.display_name, cp.task_id, cp.data_url, cp.timestamp, cp.comment,
+           COALESCE(lc.cnt, 0) as likes,
+           CASE WHEN ml.photo_id IS NOT NULL THEN true ELSE false END as liked_by_me
+    FROM checkin_photos cp
+    JOIN users u ON cp.user_id = u.id
+    LEFT JOIN (SELECT photo_id, COUNT(*) as cnt FROM photo_likes GROUP BY photo_id) lc ON lc.photo_id = cp.id
+    LEFT JOIN photo_likes ml ON ml.photo_id = cp.id AND ml.user_id = ${vid}
+    ORDER BY cp.timestamp DESC
+    LIMIT ${limit} OFFSET ${offset}
   `
 
-  const { rows } = await sql.query(
-    `SELECT cp.id, u.display_name, cp.task_id, cp.data_url, cp.timestamp, cp.comment,
-            COALESCE(lc.cnt, 0) as likes,
-            CASE WHEN ml.photo_id IS NOT NULL THEN true ELSE false END as liked_by_me
-     FROM checkin_photos cp
-     JOIN users u ON cp.user_id = u.id
-     LEFT JOIN (SELECT photo_id, COUNT(*) as cnt FROM photo_likes GROUP BY photo_id) lc ON lc.photo_id = cp.id
-     LEFT JOIN photo_likes ml ON ml.photo_id = cp.id AND ml.user_id = $1
-     ORDER BY cp.timestamp DESC
-     LIMIT $2 OFFSET $3`,
-    [viewerUserId ?? 0, limit, offset],
-  )
-
-  return rows.map((row: Record<string, unknown>) => ({
+  return (rows as Record<string, unknown>[]).map((row) => ({
     id: row.id as number,
     displayName: row.display_name as string,
     taskId: row.task_id as string,
