@@ -18,6 +18,14 @@ export function useAchievements() {
 
   const allTasks = Object.values(TASKS).flat()
 
+  // Build taskId → countryId lookup (Task.country is Chinese name, we need countryId)
+  const taskCountryIdMap = new Map<string, string>()
+  for (const [countryId, tasks] of Object.entries(TASKS)) {
+    for (const task of tasks) {
+      taskCountryIdMap.set(task.id, countryId)
+    }
+  }
+
   const statuses = computed<AchievementStatus[]>(() => {
     return ACHIEVEMENTS.map((ach) => {
       const { current, target } = evaluateCondition(ach)
@@ -39,14 +47,16 @@ export function useAchievements() {
         return { current: completed.length, target: cond.count }
 
       case 'tasks_continent': {
-        const countryIds = COUNTRIES.filter(c => c.continentId === cond.continentId).map(c => c.id)
-        const tasksInContinent = allTasks.filter(t => countryIds.includes(t.country))
-        const count = tasksInContinent.filter(t => completed.includes(t.id)).length
+        const countryIds = new Set(COUNTRIES.filter(c => c.continentId === cond.continentId).map(c => c.id))
+        const count = completed.filter(id => {
+          const cId = taskCountryIdMap.get(id)
+          return cId ? countryIds.has(cId) : false
+        }).length
         return { current: count, target: cond.count }
       }
 
       case 'tasks_country': {
-        const countryTasks = allTasks.filter(t => t.country === cond.countryId)
+        const countryTasks = TASKS[cond.countryId] ?? []
         const completedInCountry = countryTasks.filter(t => completed.includes(t.id)).length
         // count: 999 means "all tasks in country"
         const target = cond.count === 999 ? countryTasks.length : cond.count
@@ -54,20 +64,20 @@ export function useAchievements() {
       }
 
       case 'countries_total': {
-        const countries = new Set(
-          allTasks.filter(t => completed.includes(t.id)).map(t => t.country)
+        const visitedCountryIds = new Set(
+          completed.map(id => taskCountryIdMap.get(id)).filter(Boolean)
         )
-        return { current: countries.size, target: cond.count }
+        return { current: visitedCountryIds.size, target: cond.count }
       }
 
       case 'countries_continent': {
-        const countryIds = COUNTRIES.filter(c => c.continentId === cond.continentId).map(c => c.id)
-        const visitedCountries = new Set(
-          allTasks
-            .filter(t => completed.includes(t.id) && countryIds.includes(t.country))
-            .map(t => t.country)
+        const countryIds = new Set(COUNTRIES.filter(c => c.continentId === cond.continentId).map(c => c.id))
+        const visitedInContinent = new Set(
+          completed
+            .map(id => taskCountryIdMap.get(id))
+            .filter((cId): cId is string => !!cId && countryIds.has(cId))
         )
-        return { current: visitedCountries.size, target: cond.count }
+        return { current: visitedInContinent.size, target: cond.count }
       }
 
       case 'cities_total': {

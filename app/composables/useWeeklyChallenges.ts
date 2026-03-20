@@ -61,15 +61,13 @@ function seededRandom(seed: string): () => number {
 function generateChallenges(weekKey: string): WeeklyChallenge[] {
   const rng = seededRandom(weekKey)
   const challenges: WeeklyChallenge[] = []
-  const allTasks = Object.values(TASKS).flat()
 
   // Challenge 1: Country-specific task challenge
   const countriesWithTasks = COUNTRIES.filter(c => {
-    const countryTasks = allTasks.filter(t => t.country === c.id)
-    return countryTasks.length >= 3
+    return (TASKS[c.id]?.length ?? 0) >= 3
   })
   const country = countriesWithTasks[Math.floor(rng() * countriesWithTasks.length)] ?? countriesWithTasks[0]!
-  const countryTaskCount = allTasks.filter(t => t.country === country.id).length
+  const countryTaskCount = TASKS[country.id]?.length ?? 0
   const countryTarget = Math.min(3, countryTaskCount)
   challenges.push({
     id: `${weekKey}-country`,
@@ -153,16 +151,21 @@ export function useWeeklyChallenges() {
 
   const allTasks = Object.values(TASKS).flat()
 
+  // Build taskId → countryId lookup (Task.country is Chinese name, we need countryId)
+  const taskCountryIdMap = new Map<string, string>()
+  for (const [countryId, tasks] of Object.entries(TASKS)) {
+    for (const task of tasks) {
+      taskCountryIdMap.set(task.id, countryId)
+    }
+  }
+
   function getChallengeProgress(challenge: WeeklyChallenge): number {
-    // Count tasks completed that match the challenge filter
-    // We count ALL completed tasks matching filter (not just this week since we don't track timing)
     const completed = gameState.value.completed
 
     switch (challenge.type) {
       case 'country': {
-        return allTasks.filter(
-          t => t.country === challenge.filter.countryId && completed.includes(t.id)
-        ).length
+        const cId = challenge.filter.countryId
+        return completed.filter(id => taskCountryIdMap.get(id) === cId).length
       }
       case 'difficulty': {
         return allTasks.filter(
@@ -170,12 +173,13 @@ export function useWeeklyChallenges() {
         ).length
       }
       case 'continent': {
-        const countryIds = COUNTRIES
-          .filter(c => c.continentId === challenge.filter.continentId)
-          .map(c => c.id)
-        return allTasks.filter(
-          t => countryIds.includes(t.country) && completed.includes(t.id)
-        ).length
+        const countryIds = new Set(
+          COUNTRIES.filter(c => c.continentId === challenge.filter.continentId).map(c => c.id)
+        )
+        return completed.filter(id => {
+          const cId = taskCountryIdMap.get(id)
+          return cId ? countryIds.has(cId) : false
+        }).length
       }
       case 'photos':
         return getPhotos().length

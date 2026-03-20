@@ -93,7 +93,6 @@ import { COUNTRIES } from '~/data/countries'
 import { TASKS } from '~/data/tasks'
 
 const countries = COUNTRIES
-const allTasks = Object.values(TASKS).flat()
 
 const selectedCountryId = ref('')
 const selectedCityIdx = ref(0)
@@ -108,7 +107,8 @@ interface CityCoords {
 // Get city coordinates from tasks' location data
 const currentCities = computed<CityCoords[]>(() => {
   if (!selectedCountryId.value) return []
-  const countryTasks = allTasks.filter(t => t.country === selectedCountryId.value)
+  // TASKS is Record<countryId, Task[]>, use key directly
+  const countryTasks = TASKS[selectedCountryId.value] ?? []
   const cityMap = new Map<string, CityCoords>()
   for (const task of countryTasks) {
     if (task.location && !cityMap.has(task.city)) {
