@@ -16,6 +16,18 @@ interface ProgressRecord {
   updated_at: string
 }
 
+interface PhotoRecord {
+  id: number
+  user_id: number
+  task_id: string
+  data_url: string
+  timestamp: number
+  lat: number | null
+  lng: number | null
+  comment: string
+  created_at: string
+}
+
 let initialized = false
 
 async function initDB(): Promise<void> {
@@ -38,6 +50,21 @@ async function initDB(): Promise<void> {
       completed JSONB DEFAULT '[]',
       medals JSONB DEFAULT '[]',
       updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS checkin_photos (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      task_id VARCHAR(100) NOT NULL,
+      data_url TEXT NOT NULL,
+      timestamp BIGINT NOT NULL,
+      lat DOUBLE PRECISION,
+      lng DOUBLE PRECISION,
+      comment TEXT DEFAULT '',
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id, task_id)
     )
   `
 
@@ -104,4 +131,43 @@ export async function saveProgress(userId: number, exp: number, completed: strin
     ON CONFLICT (user_id)
     DO UPDATE SET exp = ${exp}, completed = ${completedJson}::jsonb, medals = ${medalsJson}::jsonb, updated_at = NOW()
   `
+}
+
+// ---- Photos API ----
+
+export async function getUserPhotos(userId: number): Promise<PhotoRecord[]> {
+  await initDB()
+  const { rows } = await sql`
+    SELECT * FROM checkin_photos WHERE user_id = ${userId} ORDER BY timestamp DESC
+  `
+  return rows as PhotoRecord[]
+}
+
+export async function savePhotoToDB(
+  userId: number,
+  photo: { taskId: string; dataUrl: string; timestamp: number; lat?: number; lng?: number; comment?: string },
+): Promise<PhotoRecord> {
+  await initDB()
+  const { taskId, dataUrl, timestamp, lat, lng, comment } = photo
+  const { rows } = await sql`
+    INSERT INTO checkin_photos (user_id, task_id, data_url, timestamp, lat, lng, comment)
+    VALUES (${userId}, ${taskId}, ${dataUrl}, ${timestamp}, ${lat ?? null}, ${lng ?? null}, ${comment ?? ''})
+    ON CONFLICT (user_id, task_id)
+    DO UPDATE SET data_url = ${dataUrl}, timestamp = ${timestamp},
+      lat = COALESCE(${lat ?? null}, checkin_photos.lat),
+      lng = COALESCE(${lng ?? null}, checkin_photos.lng),
+      comment = COALESCE(${comment ?? null}, checkin_photos.comment)
+    RETURNING *
+  `
+  return rows[0] as PhotoRecord
+}
+
+export async function updatePhotoComment(userId: number, photoId: number, comment: string): Promise<PhotoRecord | undefined> {
+  await initDB()
+  const { rows } = await sql`
+    UPDATE checkin_photos SET comment = ${comment}
+    WHERE id = ${photoId} AND user_id = ${userId}
+    RETURNING *
+  `
+  return rows[0] as PhotoRecord | undefined
 }

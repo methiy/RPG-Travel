@@ -64,6 +64,7 @@ async function handleLogin() {
   try {
     await login(username.value, password.value)
     const { loadFromServer, getLocalMigrationData, migrateLocalToServer } = useGameState()
+    const { migrateLocalPhotosToServer, loadFromServer: loadPhotosFromServer } = usePhotoCheckin()
 
     // Load server progress first
     await loadFromServer()
@@ -81,6 +82,10 @@ async function handleLogin() {
         await migrateLocalToServer()
       }
     }
+
+    // Migrate local photos to server and load server photos
+    await migrateLocalPhotosToServer()
+    await loadPhotosFromServer()
 
     await navigateTo('/')
   } catch (e: unknown) {

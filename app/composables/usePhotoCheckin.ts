@@ -1,30 +1,124 @@
-interface CheckinPhoto {
-  taskId: string
-  dataUrl: string      // base64 image
-  timestamp: number
-  location?: { lat: number; lng: number }
+import type { CheckinPhoto } from '~/types'
+
+const STORAGE_KEY = 'travelrpg2_photos'
+
+function loadLocalPhotos(): CheckinPhoto[] {
+  if (import.meta.server) return []
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+  } catch { return [] }
+}
+
+function saveLocalPhotos(photos: CheckinPhoto[]) {
+  if (import.meta.server) return
+  // Keep max 100 photos to avoid localStorage overflow
+  const trimmed = photos.length > 100 ? photos.slice(-100) : photos
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed))
 }
 
 export function usePhotoCheckin() {
-  const STORAGE_KEY = 'travelrpg2_photos'
+  const photos = useState<CheckinPhoto[]>('checkin-photos', () => loadLocalPhotos())
+  const { isLoggedIn } = useAuth()
 
   function getPhotos(): CheckinPhoto[] {
-    if (import.meta.server) return []
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
-    } catch { return [] }
-  }
-
-  function savePhoto(photo: CheckinPhoto) {
-    const photos = getPhotos()
-    photos.push(photo)
-    // Keep max 100 photos to avoid localStorage overflow
-    if (photos.length > 100) photos.shift()
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(photos))
+    return photos.value
   }
 
   function getPhotoForTask(taskId: string): CheckinPhoto | undefined {
-    return getPhotos().find(p => p.taskId === taskId)
+    return photos.value.find(p => p.taskId === taskId)
+  }
+
+  async function savePhoto(photo: CheckinPhoto) {
+    // Update reactive state
+    const idx = photos.value.findIndex(p => p.taskId === photo.taskId)
+    if (idx >= 0) {
+      photos.value[idx] = photo
+    } else {
+      photos.value.push(photo)
+    }
+
+    // Always persist to localStorage
+    saveLocalPhotos(photos.value)
+
+    // Async sync to server if logged in
+    if (isLoggedIn.value) {
+      try {
+        const saved = await $fetch<CheckinPhoto>('/api/photos', {
+          method: 'POST',
+          body: {
+            taskId: photo.taskId,
+            dataUrl: photo.dataUrl,
+            timestamp: photo.timestamp,
+            lat: photo.lat,
+            lng: photo.lng,
+            comment: photo.comment,
+          },
+        })
+        // Update with server-assigned id
+        const i = photos.value.findIndex(p => p.taskId === photo.taskId)
+        if (i >= 0 && saved.id) {
+          photos.value[i] = { ...photos.value[i], id: saved.id }
+          saveLocalPhotos(photos.value)
+        }
+      } catch {
+        // Silently fail — localStorage has the backup
+      }
+    }
+  }
+
+  async function updateComment(taskId: string, comment: string) {
+    const photo = photos.value.find(p => p.taskId === taskId)
+    if (!photo) return
+
+    photo.comment = comment
+    saveLocalPhotos(photos.value)
+
+    if (isLoggedIn.value && photo.id) {
+      try {
+        await $fetch(`/api/photos/${photo.id}`, {
+          method: 'PUT',
+          body: { comment },
+        })
+      } catch {
+        // Silently fail
+      }
+    }
+  }
+
+  async function loadFromServer() {
+    try {
+      const serverPhotos = await $fetch<CheckinPhoto[]>('/api/photos')
+      photos.value = serverPhotos
+      saveLocalPhotos(photos.value)
+    } catch {
+      // Fall back to localStorage
+    }
+  }
+
+  async function migrateLocalPhotosToServer() {
+    const local = loadLocalPhotos()
+    if (local.length === 0) return
+
+    for (const photo of local) {
+      try {
+        await $fetch('/api/photos', {
+          method: 'POST',
+          body: {
+            taskId: photo.taskId,
+            dataUrl: photo.dataUrl,
+            timestamp: photo.timestamp,
+            lat: photo.lat,
+            lng: photo.lng,
+            comment: photo.comment,
+          },
+        })
+      } catch {
+        // Skip failed uploads
+      }
+    }
+
+    // Reload from server to get canonical data with IDs
+    await loadFromServer()
   }
 
   async function capturePhoto(): Promise<string> {
@@ -96,5 +190,17 @@ export function usePhotoCheckin() {
     return calculateDistance(current, target) <= target.radius
   }
 
-  return { capturePhoto, getCurrentLocation, isNearLocation, calculateDistance, savePhoto, getPhotoForTask, getPhotos }
+  return {
+    photos,
+    capturePhoto,
+    getCurrentLocation,
+    isNearLocation,
+    calculateDistance,
+    savePhoto,
+    getPhotoForTask,
+    getPhotos,
+    updateComment,
+    loadFromServer,
+    migrateLocalPhotosToServer,
+  }
 }

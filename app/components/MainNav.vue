@@ -3,6 +3,7 @@
     <NuxtLink to="/" class="navbtn" :class="{ active: route.path === '/' }">🗺️ 世界地图</NuxtLink>
     <NuxtLink to="/medals" class="navbtn" :class="{ active: route.path.startsWith('/medals') }">🏅 勋章墙</NuxtLink>
     <NuxtLink to="/games" class="navbtn" :class="{ active: route.path.startsWith('/games') }">🎮 小游戏</NuxtLink>
+    <NuxtLink to="/photos" class="navbtn" :class="{ active: route.path.startsWith('/photos') }">📷 我的照片</NuxtLink>
   </nav>
 </template>
 

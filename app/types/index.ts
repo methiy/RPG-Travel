@@ -126,6 +126,16 @@ export interface City {
   description: string
 }
 
+export interface CheckinPhoto {
+  id?: number
+  taskId: string
+  dataUrl: string
+  timestamp: number
+  lat?: number
+  lng?: number
+  comment?: string
+}
+
 export interface AuthUser {
   id: number
   username: string
