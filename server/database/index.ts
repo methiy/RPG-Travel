@@ -183,6 +183,49 @@ export async function updatePhotoComment(userId: number, photoId: number, commen
   return rows[0] as PhotoRecord | undefined
 }
 
+// ---- Leaderboard API ----
+
+export interface LeaderboardEntry {
+  rank: number
+  userId: number
+  displayName: string
+  exp: number
+  completedCount: number
+  medalCount: number
+}
+
+export async function getLeaderboard(sortBy: 'exp' | 'completed' | 'medals' = 'exp', limit: number = 50): Promise<LeaderboardEntry[]> {
+  await initDB()
+
+  const orderClause = sortBy === 'completed'
+    ? 'jsonb_array_length(gp.completed)'
+    : sortBy === 'medals'
+      ? 'jsonb_array_length(gp.medals)'
+      : 'gp.exp'
+
+  // Use raw query since we need dynamic ORDER BY
+  const { rows } = await sql.query(
+    `SELECT u.id as user_id, u.display_name, gp.exp,
+            jsonb_array_length(gp.completed) as completed_count,
+            jsonb_array_length(gp.medals) as medal_count
+     FROM users u
+     JOIN game_progress gp ON u.id = gp.user_id
+     WHERE gp.exp > 0
+     ORDER BY ${orderClause} DESC, gp.exp DESC
+     LIMIT $1`,
+    [limit],
+  )
+
+  return rows.map((row: Record<string, unknown>, idx: number) => ({
+    rank: idx + 1,
+    userId: row.user_id as number,
+    displayName: row.display_name as string,
+    exp: row.exp as number,
+    completedCount: Number(row.completed_count),
+    medalCount: Number(row.medal_count),
+  }))
+}
+
 // ---- Daily Checkin API ----
 
 interface DailyCheckinRecord {
