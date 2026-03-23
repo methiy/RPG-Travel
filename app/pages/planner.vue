@@ -1,11 +1,22 @@
 <template>
   <div class="planner-page">
     <h2>🗺️ 旅行路线规划器</h2>
-    <p>选择一个国家，自动生成一日游路线推荐</p>
+    <p>{{ stepDescription }}</p>
+
+    <!-- Step indicator -->
+    <div class="step-bar">
+      <div
+        v-for="s in 4"
+        :key="s"
+        class="step-dot"
+        :class="{ active: step >= s, current: step === s }"
+        @click="goToStep(s)"
+      />
+    </div>
 
     <ClientOnly>
-      <!-- Step 1: 选择国家 -->
-      <section v-if="!selectedCountry" class="planner-select">
+      <!-- ═══ Step 1: Select Country ═══ -->
+      <section v-if="step === 1" class="planner-select">
         <div class="planner-search">
           <input
             v-model="searchQuery"
@@ -28,16 +39,125 @@
         </div>
       </section>
 
-      <!-- Step 2: 显示路线 -->
-      <section v-else class="planner-result">
-        <button class="back-btn" @click="selectedCountry = null">← 选择其他国家</button>
+      <!-- ═══ Step 2: Select City ═══ -->
+      <section v-else-if="step === 2" class="planner-cities">
+        <button class="back-btn" @click="goToStep(1)">← 选择其他国家</button>
 
         <div class="route-header">
-          <div class="route-country">{{ currentCountry?.name }}</div>
+          <div class="route-country">{{ currentCountry?.emoji }} {{ currentCountry?.name }}</div>
           <div class="route-subtitle">{{ currentCountry?.subtitle }}</div>
         </div>
 
-        <div v-for="(route, idx) in routes" :key="idx" class="route-day">
+        <div class="city-grid">
+          <div
+            v-for="cityName in cityNames"
+            :key="cityName"
+            class="city-card"
+            @click="selectCity(cityName)"
+          >
+            <div class="city-icon">{{ getCityEmoji(cityName) }}</div>
+            <div class="city-name">{{ cityName }}</div>
+            <div class="city-task-count">{{ getCityTaskCount(cityName) }} 个任务</div>
+          </div>
+        </div>
+
+        <!-- Legacy: Full country route option -->
+        <div class="legacy-route" @click="showFullCountryRoute">
+          <span class="legacy-icon">🗺️</span>
+          <div class="legacy-text">
+            <div class="legacy-title">查看全国路线总览</div>
+            <div class="legacy-desc">自动按城市生成完整行程</div>
+          </div>
+          <span class="legacy-arrow">→</span>
+        </div>
+      </section>
+
+      <!-- ═══ Step 3: Map + Spot Selection ═══ -->
+      <section v-else-if="step === 3" class="planner-spots">
+        <button class="back-btn" @click="goToStep(2)">← 选择其他城市</button>
+
+        <div class="route-header">
+          <div class="route-country">{{ selectedCityName }}</div>
+          <div class="route-subtitle">{{ currentCountry?.name }} · {{ cityTasks.length }} 个景点</div>
+        </div>
+
+        <!-- Map -->
+        <CityMapView
+          v-if="locatedTasks.length > 0"
+          :markers="spotMarkers"
+        />
+        <div v-else class="no-map-notice">
+          📍 该城市景点暂无精确定位，请从列表中选择
+        </div>
+
+        <!-- Spot selector -->
+        <SpotSelector
+          :tasks="cityTasks"
+          @update:selected="onSpotsSelected"
+        />
+
+        <button
+          class="generate-btn"
+          :disabled="selectedSpotIds.size === 0"
+          @click="generateItinerary"
+        >
+          🚀 生成 {{ selectedSpotIds.size }} 个景点的行程
+        </button>
+      </section>
+
+      <!-- ═══ Step 4: Itinerary Result ═══ -->
+      <section v-else-if="step === 4" class="planner-result">
+        <button class="back-btn" @click="goToStep(3)">← 重新选择景点</button>
+
+        <div class="route-header">
+          <div class="route-country">{{ selectedCityName }} · {{ itinerary.length }}日行程</div>
+          <div class="route-subtitle">{{ currentCountry?.name }}</div>
+        </div>
+
+        <!-- Itinerary map -->
+        <CityMapView
+          v-if="itineraryMarkers.length > 0"
+          :markers="itineraryMarkers"
+          :polyline-points="itineraryPolyline"
+          :polyline-color="'#4a9eff'"
+        />
+
+        <!-- Day cards -->
+        <div class="days-list">
+          <DayItinerary
+            v-for="day in itinerary"
+            :key="day.dayNum"
+            :day="day"
+          />
+        </div>
+
+        <!-- Summary -->
+        <div class="route-summary">
+          <div class="summary-item">
+            <div class="summary-value">{{ itinerary.length }}</div>
+            <div class="summary-label">天</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value">{{ totalSelectedTasks }}</div>
+            <div class="summary-label">景点</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value">{{ totalItineraryExp }}</div>
+            <div class="summary-label">总 EXP</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ Step 5 (hidden): Legacy Full Country View ═══ -->
+      <section v-else-if="step === 5" class="planner-result">
+        <button class="back-btn" @click="goToStep(2)">← 返回城市选择</button>
+
+        <div class="route-header">
+          <div class="route-country">{{ currentCountry?.name }} · 全国路线</div>
+          <div class="route-subtitle">{{ currentCountry?.subtitle }}</div>
+        </div>
+
+        <div v-for="(route, idx) in legacyRoutes" :key="idx" class="route-day">
           <div class="route-day-header">
             <span class="route-day-num">Day {{ idx + 1 }}</span>
             <span class="route-day-city">{{ route.cityName }}</span>
@@ -79,15 +199,15 @@
 
         <div class="route-summary">
           <div class="summary-item">
-            <div class="summary-value">{{ routes.length }}</div>
+            <div class="summary-value">{{ legacyRoutes.length }}</div>
             <div class="summary-label">天</div>
           </div>
           <div class="summary-item">
-            <div class="summary-value">{{ totalTaskCount }}</div>
+            <div class="summary-value">{{ legacyTotalTasks }}</div>
             <div class="summary-label">任务</div>
           </div>
           <div class="summary-item">
-            <div class="summary-value">{{ totalRouteExp }}</div>
+            <div class="summary-value">{{ legacyTotalExp }}</div>
             <div class="summary-label">总 EXP</div>
           </div>
         </div>
@@ -103,14 +223,44 @@
 <script setup lang="ts">
 import { TASKS } from '~/data/tasks'
 import { COUNTRIES } from '~/data/countries'
-import type { Task } from '~/types'
+import { CITIES, CITY_MAP } from '~/data/cities'
+import { getCityIdByName } from '~/data/city-name-map'
+import type { Task, ItineraryDay, MapMarkerData } from '~/types'
 
 const { isTaskCompleted } = useGameState()
+const { getTasksForCity, getCityNamesForCountry, buildItinerary, DAY_COLORS } = useCityPlanner()
 
+// ── State ──────────────────────────────────────────────
+const step = ref(1)
 const searchQuery = ref('')
 const selectedCountry = ref<string | null>(null)
+const selectedCityName = ref<string | null>(null)
+const selectedSpotIds = ref<Set<string>>(new Set())
+const itinerary = ref<ItineraryDay[]>([])
 
-// TASKS is Record<countryId, Task[]>, use key directly
+// ── Step description ───────────────────────────────────
+const stepDescription = computed(() => {
+  switch (step.value) {
+    case 1: return '选择一个国家，探索城市景点'
+    case 2: return '选择想要游览的城市'
+    case 3: return '在地图上选择想去的景点'
+    case 4: return '你的专属行程已生成'
+    case 5: return '全国路线总览'
+    default: return ''
+  }
+})
+
+// ── Step navigation ────────────────────────────────────
+function goToStep(s: number) {
+  if (s < step.value) {
+    step.value = s
+    if (s <= 3) itinerary.value = []
+    if (s <= 2) { selectedCityName.value = null; selectedSpotIds.value = new Set() }
+    if (s <= 1) selectedCountry.value = null
+  }
+}
+
+// ── Step 1: Country selection ──────────────────────────
 function getTasksForCountry(countryId: string): Task[] {
   return TASKS[countryId] ?? []
 }
@@ -133,20 +283,116 @@ const currentCountry = computed(() =>
 
 function selectCountry(id: string) {
   selectedCountry.value = id
+  step.value = 2
 }
 
-interface RouteDay {
+// ── Step 2: City selection ─────────────────────────────
+const cityNames = computed(() => {
+  if (!selectedCountry.value) return []
+  return getCityNamesForCountry(selectedCountry.value)
+})
+
+function getCityEmoji(cityName: string): string {
+  const id = getCityIdByName(cityName)
+  if (id && CITY_MAP[id]) return CITY_MAP[id].emoji
+  return '📍'
+}
+
+function getCityTaskCount(cityName: string): number {
+  if (!selectedCountry.value) return 0
+  return getTasksForCity(selectedCountry.value, cityName).length
+}
+
+function selectCity(cityName: string) {
+  selectedCityName.value = cityName
+  step.value = 3
+}
+
+// ── Step 3: Spot selection ─────────────────────────────
+const cityTasks = computed<Task[]>(() => {
+  if (!selectedCountry.value || !selectedCityName.value) return []
+  return getTasksForCity(selectedCountry.value, selectedCityName.value)
+})
+
+const locatedTasks = computed(() => cityTasks.value.filter(t => t.location))
+
+const spotMarkers = computed<MapMarkerData[]>(() => {
+  return locatedTasks.value
+    .filter(t => selectedSpotIds.value.has(t.id))
+    .map(t => ({
+      id: t.id,
+      name: t.name,
+      lat: t.location!.lat,
+      lng: t.location!.lng,
+      color: '#4a9eff',
+      popupHtml: `<strong>${t.name}</strong><br/><span style="color:#aaa">+${t.exp} EXP</span>`,
+    }))
+})
+
+function onSpotsSelected(ids: Set<string>) {
+  selectedSpotIds.value = ids
+}
+
+function generateItinerary() {
+  const selected = cityTasks.value.filter(t => selectedSpotIds.value.has(t.id))
+  itinerary.value = buildItinerary(selected)
+  step.value = 4
+}
+
+// ── Step 4: Itinerary display ──────────────────────────
+const itineraryMarkers = computed<MapMarkerData[]>(() => {
+  const markers: MapMarkerData[] = []
+  for (const day of itinerary.value) {
+    let taskIdx = 0
+    for (const task of day.tasks) {
+      taskIdx++
+      if (!task.location) continue
+      markers.push({
+        id: task.id,
+        name: task.name,
+        lat: task.location.lat,
+        lng: task.location.lng,
+        color: day.color,
+        label: `${day.dayNum}`,
+        popupHtml: `<strong>Day${day.dayNum}-${taskIdx}</strong><br/>${task.name}<br/><span style="color:${day.color}">+${task.exp} EXP</span>`,
+      })
+    }
+  }
+  return markers
+})
+
+const itineraryPolyline = computed<[number, number][]>(() => {
+  const points: [number, number][] = []
+  for (const day of itinerary.value) {
+    for (const task of day.tasks) {
+      if (task.location) {
+        points.push([task.location.lat, task.location.lng])
+      }
+    }
+  }
+  return points
+})
+
+const totalSelectedTasks = computed(() =>
+  itinerary.value.reduce((s, d) => s + d.tasks.length, 0)
+)
+
+const totalItineraryExp = computed(() =>
+  itinerary.value.reduce((s, d) => s + d.totalExp, 0)
+)
+
+// ── Step 5: Legacy full country route ──────────────────
+interface LegacyRouteDay {
   cityName: string
   tasks: Task[]
   totalExp: number
   tips: string[]
 }
 
-const routes = computed<RouteDay[]>(() => {
+const legacyRoutes = computed<LegacyRouteDay[]>(() => {
   if (!selectedCountry.value) return []
 
   const countryTasks = getTasksForCountry(selectedCountry.value)
-  // Group tasks by city
   const cityMap = new Map<string, Task[]>()
   for (const task of countryTasks) {
     const existing = cityMap.get(task.city) || []
@@ -154,15 +400,13 @@ const routes = computed<RouteDay[]>(() => {
     cityMap.set(task.city, existing)
   }
 
-  // Build route: one day per city, sorted by difficulty (easy first)
-  const days: RouteDay[] = []
+  const days: LegacyRouteDay[] = []
   for (const [city, tasks] of cityMap) {
     const sorted = [...tasks].sort((a, b) => {
-      const order = { easy: 0, medium: 1, hard: 2, legendary: 3 }
-      return order[a.difficulty] - order[b.difficulty]
+      const order: Record<string, number> = { easy: 0, medium: 1, hard: 2, legendary: 3 }
+      return (order[a.difficulty] ?? 0) - (order[b.difficulty] ?? 0)
     })
 
-    // Collect tips from the first task with a guide
     const tips: string[] = []
     for (const t of sorted) {
       if (t.guide?.tips) {
@@ -171,20 +415,20 @@ const routes = computed<RouteDay[]>(() => {
       }
     }
 
-    days.push({
-      cityName: city,
-      tasks: sorted,
-      totalExp: sorted.reduce((sum, t) => sum + t.exp, 0),
-      tips,
-    })
+    days.push({ cityName: city, tasks: sorted, totalExp: sorted.reduce((sum, t) => sum + t.exp, 0), tips })
   }
 
   return days
 })
 
-const totalTaskCount = computed(() => routes.value.reduce((sum, r) => sum + r.tasks.length, 0))
-const totalRouteExp = computed(() => routes.value.reduce((sum, r) => sum + r.totalExp, 0))
+const legacyTotalTasks = computed(() => legacyRoutes.value.reduce((s, r) => s + r.tasks.length, 0))
+const legacyTotalExp = computed(() => legacyRoutes.value.reduce((s, r) => s + r.totalExp, 0))
 
+function showFullCountryRoute() {
+  step.value = 5
+}
+
+// ── Helpers ────────────────────────────────────────────
 function diffLabel(d: string): string {
   const map: Record<string, string> = { easy: '简单', medium: '中等', hard: '困难', legendary: '传奇' }
   return map[d] || d
@@ -204,7 +448,30 @@ function diffLabel(d: string): string {
 }
 .planner-page > p {
   color: var(--muted);
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+/* Step indicator */
+.step-bar {
+  display: flex;
+  gap: 8px;
   margin-bottom: 20px;
+}
+.step-dot {
+  width: 28px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.step-dot.active {
+  background: var(--accent);
+}
+.step-dot.current {
+  width: 40px;
+  background: var(--accent);
 }
 
 /* Search */
@@ -264,6 +531,78 @@ function diffLabel(d: string): string {
   margin-top: 2px;
 }
 
+/* City grid */
+.city-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.city-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.city-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+.city-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+.city-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+.city-task-count {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Legacy route entry */
+.legacy-route {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg2);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.legacy-route:hover {
+  border-color: var(--accent);
+  border-style: solid;
+}
+.legacy-icon {
+  font-size: 24px;
+}
+.legacy-text {
+  flex: 1;
+}
+.legacy-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+.legacy-desc {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.legacy-arrow {
+  color: var(--muted);
+  font-size: 16px;
+}
+
 /* Back button */
 .back-btn {
   display: inline-flex;
@@ -286,7 +625,7 @@ function diffLabel(d: string): string {
 
 /* Route header */
 .route-header {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 .route-country {
   font-size: 20px;
@@ -299,7 +638,50 @@ function diffLabel(d: string): string {
   margin-top: 4px;
 }
 
-/* Route days */
+/* No map notice */
+.no-map-notice {
+  padding: 20px;
+  text-align: center;
+  background: var(--bg2);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Generate button */
+.generate-btn {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.generate-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.generate-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Days list */
+.days-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 16px 0;
+}
+
+/* Legacy route days */
 .route-day {
   margin-bottom: 20px;
   background: var(--bg2);
@@ -452,7 +834,9 @@ function diffLabel(d: string): string {
   .planner-page { padding: 16px 12px; }
   .planner-page h2 { font-size: 19px; }
   .country-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+  .city-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
   .country-card { padding: 12px 8px; }
+  .city-card { padding: 10px 8px; }
   .country-emoji { font-size: 24px; }
   .route-day { padding: 12px; }
   .route-task { padding: 8px; }

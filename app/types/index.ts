@@ -141,3 +141,27 @@ export interface AuthUser {
   username: string
   displayName: string
 }
+
+// ── City Planner Types ────────────────────────────────
+export interface MapMarkerData {
+  id: string
+  name: string
+  lat: number
+  lng: number
+  color: string
+  label?: string       // Day label like "D1-1"
+  popupHtml?: string
+}
+
+export interface ItineraryDay {
+  dayNum: number
+  color: string
+  tasks: Task[]
+  totalExp: number
+  foodSpots: string[]
+  transport: string[]
+  budget: string[]
+  bestTimes: string[]
+  tips: string[]
+  localTips: string[]
+}
