@@ -79,6 +79,30 @@
           <li v-for="(t, i) in day.localTips.slice(0, 3)" :key="i">{{ t }}</li>
         </ul>
       </div>
+
+      <!-- Open hours -->
+      <div v-if="day.openHours.length" class="guide-section">
+        <div class="guide-title">🕐 开放时间</div>
+        <ul>
+          <li v-for="(h, i) in day.openHours" :key="i">{{ h }}</li>
+        </ul>
+      </div>
+
+      <!-- Photo tips -->
+      <div v-if="day.photoTips.length" class="guide-section">
+        <div class="guide-title">📸 拍照贴士</div>
+        <ul>
+          <li v-for="(p, i) in day.photoTips.slice(0, 4)" :key="i">{{ p }}</li>
+        </ul>
+      </div>
+
+      <!-- Safety notes -->
+      <div v-if="day.safetyNotes.length" class="guide-section">
+        <div class="guide-title">🛡️ 安全提示</div>
+        <ul>
+          <li v-for="(s, i) in day.safetyNotes.slice(0, 3)" :key="i">{{ s }}</li>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
@@ -102,7 +126,10 @@ const hasGuide = computed(() =>
   props.day.transport.length > 0 ||
   props.day.budget.length > 0 ||
   props.day.tips.length > 0 ||
-  props.day.localTips.length > 0
+  props.day.localTips.length > 0 ||
+  props.day.openHours.length > 0 ||
+  props.day.safetyNotes.length > 0 ||
+  props.day.photoTips.length > 0
 )
 
 function diffLabel(d: string): string {

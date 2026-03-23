@@ -118,6 +118,9 @@ function extractGuideData(tasks: Task[]) {
   const bestTimes: string[] = []
   const tips: string[] = []
   const localTips: string[] = []
+  const openHours: string[] = []
+  const safetyNotes: string[] = []
+  const photoTips: string[] = []
 
   for (const t of tasks) {
     if (!t.guide) continue
@@ -127,6 +130,9 @@ function extractGuideData(tasks: Task[]) {
     if (t.guide.bestTime) bestTimes.push(`${t.name}: ${t.guide.bestTime}`)
     if (t.guide.tips?.length) tips.push(...t.guide.tips)
     if (t.guide.localTips?.length) localTips.push(...t.guide.localTips)
+    if (t.guide.openHours) openHours.push(`${t.name}: ${t.guide.openHours}`)
+    if (t.guide.safetyNotes?.length) safetyNotes.push(...t.guide.safetyNotes)
+    if (t.guide.photoTips?.length) photoTips.push(...t.guide.photoTips)
   }
 
   // Deduplicate
@@ -137,6 +143,9 @@ function extractGuideData(tasks: Task[]) {
     bestTimes: [...new Set(bestTimes)],
     tips: [...new Set(tips)],
     localTips: [...new Set(localTips)],
+    openHours: [...new Set(openHours)],
+    safetyNotes: [...new Set(safetyNotes)],
+    photoTips: [...new Set(photoTips)],
   }
 }
 

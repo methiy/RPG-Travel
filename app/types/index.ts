@@ -38,6 +38,32 @@ export interface TaskGuide {
   bestTime: string         // Best time to visit
   budget: string           // Budget estimate
   localTips: string[]      // Local insider tips
+  openHours?: string       // "09:00-17:00，周一闭馆"
+  safetyNotes?: string[]   // ["山路湿滑注意"]
+  photoTips?: string[]     // ["日落前1小时最佳"]
+}
+
+// 国家攻略
+export interface CountryGuide {
+  visa: string                 // "中国护照免签30天"
+  currency: string             // "日元(JPY)，1CNY≈20JPY"
+  language: string[]           // ["日语为主", "旅游区英语通用"]
+  emergencyContacts: string[]  // ["警察: 110", "中国大使馆: 03-3403-3388"]
+  bestSeasons: string          // "3-5月樱花季、10-11月红叶季"
+  budgetRange: string          // "每日500-1500元"
+  culturalDos: string[]        // ["进寺庙脱鞋", "鞠躬致谢"]
+  culturalDonts: string[]      // ["不要在电车大声说话"]
+  packingEssentials: string[]  // ["转换插头(A型)", "现金"]
+  safetyNotes: string[]        // ["治安极好", "注意地震"]
+}
+
+// 城市攻略
+export interface CityGuide {
+  transport: string[]          // ["地铁发达，买Suica卡"]
+  weather: string              // "夏季30-35°C，冬季0-10°C"
+  localHighlights: string[]    // ["涩谷潮流", "浅草传统"]
+  safetyTips: string[]         // ["歌舞伎町夜间注意"]
+  recommendedDays: string      // "建议3-5天"
 }
 
 export interface Task {
@@ -116,6 +142,7 @@ export interface Country {
   tags: string[]
   description: string
   theme: ChapterTheme
+  guide?: CountryGuide
 }
 
 export interface City {
@@ -124,6 +151,7 @@ export interface City {
   name: string
   emoji: string
   description: string
+  guide?: CityGuide
 }
 
 export interface CheckinPhoto {
@@ -153,6 +181,28 @@ export interface MapMarkerData {
   popupHtml?: string
 }
 
+// ── AI Types ────────────────────────────────────────────
+export type AIProvider = 'openai' | 'claude' | 'deepseek'
+
+export interface AISettings {
+  provider: AIProvider
+  apiKey: string          // encrypted in DB, masked on client
+  baseUrl?: string        // custom API endpoint
+  model?: string          // model name override
+}
+
+export interface AIChatMessage {
+  role: 'system' | 'user' | 'assistant'
+  content: string
+}
+
+export interface AIPhotoAnalysis {
+  scene: string           // 场景描述
+  landmarks: string[]     // 地标识别
+  diary: string           // 旅行日记
+}
+
+// ── City Planner Types ────────────────────────────────
 export interface ItineraryDay {
   dayNum: number
   color: string
@@ -164,4 +214,7 @@ export interface ItineraryDay {
   bestTimes: string[]
   tips: string[]
   localTips: string[]
+  openHours: string[]
+  safetyNotes: string[]
+  photoTips: string[]
 }

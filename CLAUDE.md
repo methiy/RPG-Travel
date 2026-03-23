@@ -24,3 +24,7 @@ This follows standard Nuxt 4 conventions with file-based routing and auto-import
 - `.output/` — Production build output (gitignored)
 
 Nuxt auto-imports Vue APIs, composables, and components — no manual imports needed for standard Vue/Nuxt utilities.
+
+## Workflow Rules
+
+1. 完成功能后必须进行完备的检验和测试（至少执行 `npm run build` 确认构建通过），确认没有问题后直接提交并 push 到远程仓库，无需额外询问。

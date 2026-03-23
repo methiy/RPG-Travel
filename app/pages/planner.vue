@@ -48,6 +48,9 @@
           <div class="route-subtitle">{{ currentCountry?.subtitle }}</div>
         </div>
 
+        <!-- Country guide panel -->
+        <CountryGuidePanel :guide="currentCountry?.guide" :country-name="currentCountry?.name" />
+
         <div class="city-grid">
           <div
             v-for="cityName in cityNames"
@@ -81,6 +84,9 @@
           <div class="route-subtitle">{{ currentCountry?.name }} · {{ cityTasks.length }} 个景点</div>
         </div>
 
+        <!-- City guide panel -->
+        <CityGuidePanel :guide="currentCityGuide" :city-name="selectedCityName || undefined" :country-name="currentCountry?.name" />
+
         <!-- Map -->
         <CityMapView
           v-if="locatedTasks.length > 0"
@@ -102,6 +108,16 @@
           @click="generateItinerary"
         >
           🚀 生成 {{ selectedSpotIds.size }} 个景点的行程
+        </button>
+
+        <!-- AI Optimize -->
+        <button
+          v-if="selectedSpotIds.size > 0"
+          class="ai-optimize-btn"
+          :disabled="aiOptimizing"
+          @click="handleAIOptimize"
+        >
+          {{ aiOptimizing ? '⏳ AI 优化中...' : '🤖 AI 优化行程' }}
         </button>
       </section>
 
@@ -145,6 +161,15 @@
             <div class="summary-value">{{ totalItineraryExp }}</div>
             <div class="summary-label">总 EXP</div>
           </div>
+        </div>
+
+        <!-- AI Itinerary suggestion -->
+        <div v-if="aiItinerary" class="ai-itinerary-section">
+          <div class="ai-badge">🤖 AI 智能行程建议</div>
+          <div class="ai-itinerary-text" v-html="renderMarkdown(aiItinerary)" />
+        </div>
+        <div v-if="aiOptimizeError" class="ai-itinerary-error">
+          ❌ {{ aiOptimizeError }}
         </div>
       </section>
 
@@ -217,6 +242,13 @@
         <div class="planner-loading">加载中...</div>
       </template>
     </ClientOnly>
+
+    <!-- AI Chat Assistant (shown on step 2+) -->
+    <AIChatPanel
+      v-if="step >= 2"
+      :country="currentCountry?.name"
+      :city="selectedCityName || undefined"
+    />
   </div>
 </template>
 
@@ -312,6 +344,13 @@ function selectCity(cityName: string) {
 const cityTasks = computed<Task[]>(() => {
   if (!selectedCountry.value || !selectedCityName.value) return []
   return getTasksForCity(selectedCountry.value, selectedCityName.value)
+})
+
+const currentCityGuide = computed(() => {
+  if (!selectedCityName.value || !selectedCountry.value) return undefined
+  const cityId = getCityIdByName(selectedCityName.value)
+  if (cityId && CITY_MAP[cityId]) return CITY_MAP[cityId].guide
+  return undefined
 })
 
 const locatedTasks = computed(() => cityTasks.value.filter(t => t.location))
@@ -432,6 +471,68 @@ function showFullCountryRoute() {
 function diffLabel(d: string): string {
   const map: Record<string, string> = { easy: '简单', medium: '中等', hard: '困难', legendary: '传奇' }
   return map[d] || d
+}
+
+// ── AI Optimize ────────────────────────────────────────
+const aiOptimizing = ref(false)
+const aiItinerary = ref('')
+const aiOptimizeError = ref('')
+
+async function handleAIOptimize() {
+  const { checkConfigured, optimizeItinerary } = useAI()
+
+  const configured = await checkConfigured()
+  if (!configured) {
+    aiOptimizeError.value = '请先在设置页面配置 AI'
+    return
+  }
+
+  aiOptimizing.value = true
+  aiOptimizeError.value = ''
+  aiItinerary.value = ''
+
+  try {
+    const selected = cityTasks.value.filter(t => selectedSpotIds.value.has(t.id))
+    const tasks = selected.map(t => ({
+      name: t.name,
+      city: t.city,
+      difficulty: t.difficulty,
+      exp: t.exp,
+    }))
+
+    const result = await optimizeItinerary(
+      tasks,
+      selectedCityName.value || '',
+      currentCountry.value?.name || '',
+    )
+    aiItinerary.value = result
+
+    // Auto navigate to step 4 to show results with the AI suggestion
+    if (itinerary.value.length === 0) {
+      generateItinerary()
+    }
+  } catch (err: unknown) {
+    aiOptimizeError.value = (err as Error).message || 'AI 优化失败'
+  } finally {
+    aiOptimizing.value = false
+  }
+}
+
+// Simple markdown renderer
+function renderMarkdown(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/^### (.+)$/gm, '<h4 class="ai-h3">$1</h4>')
+    .replace(/^## (.+)$/gm, '<h3 class="ai-h2">$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+    .replace(/<\/ul>\s*<ul>/g, '')
+    .replace(/^---$/gm, '<hr/>')
+    .replace(/\n\n/g, '<br/>')
+    .replace(/\n/g, ' ')
 }
 </script>
 
@@ -840,5 +941,89 @@ function diffLabel(d: string): string {
   .country-emoji { font-size: 24px; }
   .route-day { padding: 12px; }
   .route-task { padding: 8px; }
+}
+
+/* AI Optimize button */
+.ai-optimize-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px dashed var(--accent);
+  background: rgba(74, 158, 255, 0.05);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ai-optimize-btn:hover:not(:disabled) {
+  background: rgba(74, 158, 255, 0.1);
+  border-style: solid;
+}
+.ai-optimize-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* AI Itinerary */
+.ai-itinerary-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--bg2);
+  border: 1px solid rgba(74, 158, 255, 0.2);
+  border-radius: 12px;
+}
+.ai-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  background: rgba(74, 158, 255, 0.1);
+  border: 1px solid rgba(74, 158, 255, 0.2);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.ai-itinerary-text {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.ai-itinerary-text :deep(h3) {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 16px 0 6px;
+}
+.ai-itinerary-text :deep(h4) {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 10px 0 4px;
+}
+.ai-itinerary-text :deep(ul) {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+.ai-itinerary-text :deep(li) {
+  margin-bottom: 3px;
+}
+.ai-itinerary-text :deep(strong) {
+  color: var(--text);
+}
+.ai-itinerary-text :deep(hr) {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 12px 0;
+}
+.ai-itinerary-error {
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: rgba(214, 48, 49, 0.1);
+  border: 1px solid rgba(214, 48, 49, 0.2);
+  border-radius: 10px;
+  color: var(--red);
+  font-size: 13px;
 }
 </style>

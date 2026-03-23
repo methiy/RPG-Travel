@@ -70,6 +70,47 @@
                   </button>
                 </div>
               </div>
+
+              <!-- AI Photo Analysis -->
+              <div class="ai-analyze-section">
+                <button
+                  v-if="!photoAnalysis && !analyzing"
+                  class="btn-analyze"
+                  @click="handleAnalyze"
+                >
+                  🤖 AI 分析照片
+                </button>
+
+                <div v-if="analyzing" class="analyzing-state">
+                  <div class="analyze-spinner" />
+                  <span>AI 正在分析照片...</span>
+                </div>
+
+                <div v-if="analyzeError" class="analyze-error">
+                  ❌ {{ analyzeError }}
+                </div>
+
+                <div v-if="photoAnalysis" class="analysis-result">
+                  <div class="analysis-badge">🤖 AI 分析结果</div>
+                  <div class="analysis-item">
+                    <div class="analysis-label">📷 场景描述</div>
+                    <div class="analysis-text">{{ photoAnalysis.scene }}</div>
+                  </div>
+                  <div v-if="photoAnalysis.landmarks.length" class="analysis-item">
+                    <div class="analysis-label">🏛️ 地标识别</div>
+                    <div class="analysis-tags">
+                      <span v-for="(l, i) in photoAnalysis.landmarks" :key="i" class="analysis-tag">{{ l }}</span>
+                    </div>
+                  </div>
+                  <div class="analysis-item">
+                    <div class="analysis-label">📝 旅行日记</div>
+                    <div class="analysis-text diary">{{ photoAnalysis.diary }}</div>
+                  </div>
+                  <button class="btn-use-diary" @click="useDiaryAsComment">
+                    📋 用日记作为留言
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -79,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CheckinPhoto, Task } from '~/types'
+import type { CheckinPhoto, Task, AIPhotoAnalysis } from '~/types'
 import { TASKS } from '~/data/tasks'
 
 const { photos, updateComment } = usePhotoCheckin()
@@ -123,11 +164,15 @@ const saving = ref(false)
 function openDetail(photo: CheckinPhoto) {
   selectedPhoto.value = photo
   editComment.value = photo.comment || ''
+  photoAnalysis.value = null
+  analyzeError.value = ''
 }
 
 function closeDetail() {
   selectedPhoto.value = null
   editComment.value = ''
+  photoAnalysis.value = null
+  analyzeError.value = ''
 }
 
 async function handleSaveComment() {
@@ -138,6 +183,43 @@ async function handleSaveComment() {
     selectedPhoto.value.comment = editComment.value
   } finally {
     saving.value = false
+  }
+}
+
+// ── AI Photo Analysis ──────────────────────────────────
+const photoAnalysis = ref<AIPhotoAnalysis | null>(null)
+const analyzing = ref(false)
+const analyzeError = ref('')
+
+async function handleAnalyze() {
+  if (!selectedPhoto.value) return
+
+  const { checkConfigured, analyzePhoto } = useAI()
+
+  const configured = await checkConfigured()
+  if (!configured) {
+    analyzeError.value = '请先在设置页面配置 AI'
+    return
+  }
+
+  analyzing.value = true
+  analyzeError.value = ''
+  photoAnalysis.value = null
+
+  try {
+    const taskName = getTaskName(selectedPhoto.value.taskId)
+    const result = await analyzePhoto(selectedPhoto.value.dataUrl, taskName)
+    photoAnalysis.value = result
+  } catch (err: unknown) {
+    analyzeError.value = (err as Error).message || '照片分析失败'
+  } finally {
+    analyzing.value = false
+  }
+}
+
+function useDiaryAsComment() {
+  if (photoAnalysis.value?.diary) {
+    editComment.value = photoAnalysis.value.diary.slice(0, 500)
   }
 }
 </script>
@@ -356,5 +438,120 @@ async function handleSaveComment() {
   }
   .modal-content { max-width: 100%; }
   .modal-info { padding: 12px 16px 16px; }
+}
+
+/* AI Photo Analysis */
+.ai-analyze-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.btn-analyze {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px dashed var(--accent);
+  background: rgba(74, 158, 255, 0.05);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-analyze:hover {
+  background: rgba(74, 158, 255, 0.1);
+  border-style: solid;
+}
+
+.analyzing-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  color: var(--accent);
+  font-size: 13px;
+}
+.analyze-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.analyze-error {
+  padding: 8px 12px;
+  background: rgba(214, 48, 49, 0.1);
+  border: 1px solid rgba(214, 48, 49, 0.2);
+  border-radius: 8px;
+  color: var(--red);
+  font-size: 12px;
+}
+
+.analysis-result {
+  background: var(--bg3);
+  border: 1px solid rgba(74, 158, 255, 0.2);
+  border-radius: 12px;
+  padding: 12px;
+}
+.analysis-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(74, 158, 255, 0.1);
+  border: 1px solid rgba(74, 158, 255, 0.2);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.analysis-item {
+  margin-bottom: 10px;
+}
+.analysis-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.analysis-text {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.analysis-text.diary {
+  font-style: italic;
+  color: var(--text);
+}
+.analysis-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.analysis-tag {
+  padding: 2px 8px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text);
+}
+.btn-use-diary {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-use-diary:hover {
+  border-color: var(--accent);
 }
 </style>

@@ -97,6 +97,11 @@ async function initDB(): Promise<void> {
     await sql`
       ALTER TABLE users ADD COLUMN IF NOT EXISTS privacy_settings JSONB DEFAULT '{"profile_public":true,"show_stats":true,"show_photos":true,"show_medals":true}'
     `
+
+    // Add ai_settings column if it doesn't exist
+    await sql`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_settings JSONB DEFAULT NULL
+    `
   } catch (err) {
     console.error('[initDB] Table creation failed:', err)
     // Still mark initialized to avoid infinite retry loops on every request
@@ -381,3 +386,27 @@ export async function togglePhotoLike(userId: number, photoId: number): Promise<
 }
 
 // ---- Daily Checkin API ---- (removed)
+
+// ---- AI Settings API ----
+
+export interface AISettingsRecord {
+  provider: string
+  apiKey: string          // encrypted
+  baseUrl?: string
+  model?: string
+}
+
+export async function getAISettings(userId: number): Promise<AISettingsRecord | null> {
+  await initDB()
+  const { rows } = await sql`SELECT ai_settings FROM users WHERE id = ${userId} LIMIT 1`
+  if (!rows[0]) return null
+  const raw = rows[0].ai_settings
+  if (!raw) return null
+  return (typeof raw === 'string' ? JSON.parse(raw) : raw) as AISettingsRecord
+}
+
+export async function saveAISettings(userId: number, settings: AISettingsRecord): Promise<void> {
+  await initDB()
+  const json = JSON.stringify(settings)
+  await sql`UPDATE users SET ai_settings = ${json}::jsonb WHERE id = ${userId}`
+}
