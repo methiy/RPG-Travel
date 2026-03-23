@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: '请提供 AI 供应商和 API Key' })
   }
 
-  const validProviders = ['openai', 'claude', 'deepseek']
+  const validProviders = ['openai', 'claude', 'deepseek', 'gemini']
   if (!validProviders.includes(provider)) {
     throw createError({ statusCode: 400, statusMessage: '不支持的 AI 供应商' })
   }

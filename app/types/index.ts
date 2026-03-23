@@ -182,7 +182,7 @@ export interface MapMarkerData {
 }
 
 // ── AI Types ────────────────────────────────────────────
-export type AIProvider = 'openai' | 'claude' | 'deepseek'
+export type AIProvider = 'openai' | 'claude' | 'deepseek' | 'gemini'
 
 export interface AISettings {
   provider: AIProvider

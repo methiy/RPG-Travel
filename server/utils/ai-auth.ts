@@ -49,6 +49,8 @@ function getProviderDefaults(provider: string): { baseUrl: string; model: string
       return { baseUrl: 'https://api.anthropic.com', model: 'claude-sonnet-4-20250514' }
     case 'deepseek':
       return { baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat' }
+    case 'gemini':
+      return { baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.0-flash' }
     default:
       return { baseUrl: '', model: '' }
   }

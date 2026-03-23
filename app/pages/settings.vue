@@ -189,6 +189,7 @@ const providers = [
   { id: 'openai' as AIProvider, icon: '🟢', name: 'OpenAI' },
   { id: 'claude' as AIProvider, icon: '🟠', name: 'Claude' },
   { id: 'deepseek' as AIProvider, icon: '🔵', name: 'DeepSeek' },
+  { id: 'gemini' as AIProvider, icon: '🔷', name: 'Gemini' },
 ]
 
 const aiForm = reactive({
@@ -209,6 +210,7 @@ const defaultBaseUrl = computed(() => {
     case 'openai': return 'https://api.openai.com/v1'
     case 'claude': return 'https://api.anthropic.com'
     case 'deepseek': return 'https://api.deepseek.com/v1'
+    case 'gemini': return 'https://generativelanguage.googleapis.com/v1beta/openai'
     default: return ''
   }
 })
@@ -218,6 +220,7 @@ const defaultModel = computed(() => {
     case 'openai': return 'gpt-4o-mini'
     case 'claude': return 'claude-sonnet-4-20250514'
     case 'deepseek': return 'deepseek-chat'
+    case 'gemini': return 'gemini-2.0-flash'
     default: return ''
   }
 })
@@ -458,7 +461,7 @@ onMounted(() => {
 
 .provider-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 .provider-btn {
@@ -615,7 +618,7 @@ onMounted(() => {
     padding: 14px;
   }
   .provider-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 6px;
   }
   .provider-btn {
