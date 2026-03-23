@@ -136,13 +136,6 @@ export interface CheckinPhoto {
   comment?: string
 }
 
-export interface CheckinState {
-  lastDate: string | null   // 'YYYY-MM-DD' 格式
-  streak: number            // 当前连续天数
-  total: number             // 累计签到天数
-  maxStreak: number         // 历史最高连续天数
-}
-
 export interface AuthUser {
   id: number
   username: string

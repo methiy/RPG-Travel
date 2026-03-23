@@ -65,7 +65,6 @@ async function handleLogin() {
     await login(username.value, password.value)
     const { loadFromServer, getLocalMigrationData, migrateLocalToServer } = useGameState()
     const { migrateLocalPhotosToServer, loadFromServer: loadPhotosFromServer } = usePhotoCheckin()
-    const { loadCheckinStatus } = useDailyCheckin()
 
     // Load server progress first
     await loadFromServer()
@@ -90,13 +89,6 @@ async function handleLogin() {
       await loadPhotosFromServer()
     } catch {
       // Photo migration failure should not block login
-    }
-
-    // Load daily checkin status
-    try {
-      await loadCheckinStatus()
-    } catch {
-      // Checkin status failure should not block login
     }
 
     await navigateTo('/')

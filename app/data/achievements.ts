@@ -3,7 +3,7 @@ export interface Achievement {
   icon: string
   name: string
   desc: string
-  category: 'explorer' | 'collector' | 'challenge' | 'social' | 'dedication'
+  category: 'explorer' | 'collector' | 'challenge' | 'social'
   /** How to check: type of condition */
   condition:
     | { type: 'tasks_total'; count: number }
@@ -15,9 +15,7 @@ export interface Achievement {
     | { type: 'medals_total'; count: number }
     | { type: 'difficulty'; difficulty: string; count: number }
     | { type: 'exp_total'; amount: number }
-    | { type: 'streak'; days: number }
     | { type: 'photos_total'; count: number }
-    | { type: 'checkin_total'; count: number }
 }
 
 export const ACHIEVEMENTS: Achievement[] = [
@@ -72,14 +70,6 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'ach-exp-500', icon: '💫', name: 'EXP 新星', desc: '累计获得 500 EXP', category: 'challenge', condition: { type: 'exp_total', amount: 500 } },
   { id: 'ach-exp-2000', icon: '☀️', name: 'EXP 之光', desc: '累计获得 2000 EXP', category: 'challenge', condition: { type: 'exp_total', amount: 2000 } },
   { id: 'ach-exp-5000', icon: '🌙', name: 'EXP 传说', desc: '累计获得 5000 EXP', category: 'challenge', condition: { type: 'exp_total', amount: 5000 } },
-
-  // ── 坚持成就 (Dedication) ──────────────────────────
-  { id: 'ach-streak-3', icon: '🔥', name: '三天坚持', desc: '连续签到 3 天', category: 'dedication', condition: { type: 'streak', days: 3 } },
-  { id: 'ach-streak-7', icon: '🔥', name: '一周旅人', desc: '连续签到 7 天', category: 'dedication', condition: { type: 'streak', days: 7 } },
-  { id: 'ach-streak-30', icon: '🔥', name: '月度旅行家', desc: '连续签到 30 天', category: 'dedication', condition: { type: 'streak', days: 30 } },
-  { id: 'ach-checkin-10', icon: '📅', name: '常旅客', desc: '累计签到 10 天', category: 'dedication', condition: { type: 'checkin_total', count: 10 } },
-  { id: 'ach-checkin-50', icon: '📅', name: '旅行日记', desc: '累计签到 50 天', category: 'dedication', condition: { type: 'checkin_total', count: 50 } },
-  { id: 'ach-checkin-100', icon: '📅', name: '百日征程', desc: '累计签到 100 天', category: 'dedication', condition: { type: 'checkin_total', count: 100 } },
 
   // ── 摄影成就 (Social/Photos) ───────────────────────
   { id: 'ach-1-photo', icon: '📸', name: '第一张照片', desc: '上传第 1 张打卡照', category: 'social', condition: { type: 'photos_total', count: 1 } },

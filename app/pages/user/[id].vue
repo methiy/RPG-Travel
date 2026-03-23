@@ -47,9 +47,6 @@
             <div class="exp-fill" :style="{ width: (profileLevelInfo.cur / profileLevelInfo.need * 100) + '%' }" />
           </div>
         </div>
-        <div v-if="profile.showCheckinStreak && profile.checkin" class="header-streak">
-          🔥 连续签到 <strong>{{ profile.checkin.streak }}</strong> 天
-        </div>
       </section>
 
       <!-- Stats -->
@@ -65,14 +62,6 @@
         <div class="stat-card">
           <div class="stat-value">{{ countriesCount }}</div>
           <div class="stat-label">探索国家</div>
-        </div>
-        <div v-if="profile.showCheckinStreak && profile.checkin" class="stat-card">
-          <div class="stat-value">{{ profile.checkin.total }}</div>
-          <div class="stat-label">累计签到</div>
-        </div>
-        <div v-if="profile.showCheckinStreak && profile.checkin" class="stat-card">
-          <div class="stat-value">{{ profile.checkin.maxStreak }}</div>
-          <div class="stat-label">最高连续签到</div>
         </div>
         <div class="stat-card">
           <div class="stat-value">{{ profile.exp }}</div>
@@ -127,8 +116,6 @@ interface UserProfile {
   showStats?: boolean
   showPhotos?: boolean
   showMedals?: boolean
-  showCheckinStreak?: boolean
-  checkin?: { streak: number; total: number; maxStreak: number }
   photos?: { id: number; taskId: string; dataUrl: string; timestamp: number; comment: string }[]
   privacySettings?: Record<string, boolean>
 }
@@ -167,7 +154,7 @@ const displayMedals = computed(() => {
 
 const hasHiddenSections = computed(() => {
   if (!profile.value) return false
-  return !profile.value.showStats || !profile.value.showPhotos || !profile.value.showMedals || !profile.value.showCheckinStreak
+  return !profile.value.showStats || !profile.value.showPhotos || !profile.value.showMedals
 })
 
 async function fetchProfile() {
@@ -349,14 +336,6 @@ onMounted(() => {
   background: linear-gradient(90deg, var(--accent), var(--accent2));
   border-radius: 4px;
   transition: width 1s ease;
-}
-.header-streak {
-  font-size: 14px;
-  color: var(--muted);
-}
-.header-streak strong {
-  color: #ff6b35;
-  font-size: 18px;
 }
 
 /* Stats */

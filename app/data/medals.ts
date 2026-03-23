@@ -8,9 +8,6 @@ const GAME_MEDALS: Medal[] = [
   { id: 'flag-master', icon: '🏳️', name: '国旗达人', desc: '国旗猜猜猜正确率75%以上' },
   { id: 'distance-master', icon: '📏', name: '距离感达人', desc: '距离猜猜猜平均误差15%以内' },
   { id: 'currency-master', icon: '💰', name: '汇率达人', desc: '汇率挑战正确率70%以上' },
-  { id: 'streak-7', icon: '🔥', name: '一周坚持', desc: '连续签到7天' },
-  { id: 'streak-14', icon: '🔥', name: '两周不断', desc: '连续签到14天' },
-  { id: 'streak-30', icon: '🔥', name: '月度旅行家', desc: '连续签到30天' },
 ]
 
 export const ALL_MEDALS: Medal[] = [

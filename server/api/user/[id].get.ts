@@ -1,4 +1,4 @@
-import { findUserById, getProgress, getDailyCheckin, getUserPhotosLimited, type PrivacySettings, DEFAULT_PRIVACY_SETTINGS } from '../../database/index'
+import { findUserById, getProgress, getUserPhotosLimited, type PrivacySettings, DEFAULT_PRIVACY_SETTINGS } from '../../database/index'
 
 export default defineEventHandler(async (event) => {
   const id = parseInt(getRouterParam(event, 'id') || '')
@@ -54,19 +54,6 @@ export default defineEventHandler(async (event) => {
       result.showStats = true
     } else {
       result.showStats = false
-    }
-
-    // Check-in streak
-    if (isSelf || privacy.show_checkin_streak) {
-      const checkin = await getDailyCheckin(id)
-      result.checkin = {
-        streak: checkin?.streak ?? 0,
-        total: checkin?.total ?? 0,
-        maxStreak: checkin?.max_streak ?? 0,
-      }
-      result.showCheckinStreak = true
-    } else {
-      result.showCheckinStreak = false
     }
 
     // Photos

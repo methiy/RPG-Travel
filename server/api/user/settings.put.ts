@@ -5,7 +5,6 @@ const VALID_KEYS: (keyof PrivacySettings)[] = [
   'show_stats',
   'show_photos',
   'show_medals',
-  'show_checkin_streak',
 ]
 
 export default defineEventHandler(async (event) => {

@@ -39,12 +39,6 @@
             @update:model-value="onSettingChange"
           />
 
-          <ToggleSwitch
-            v-model="settings.show_checkin_streak"
-            label="显示签到记录"
-            description="连续签到天数和累计签到数据"
-            @update:model-value="onSettingChange"
-          />
         </div>
 
         <div v-else class="master-off-hint">
@@ -78,7 +72,6 @@ interface PrivacySettings {
   show_stats: boolean
   show_photos: boolean
   show_medals: boolean
-  show_checkin_streak: boolean
 }
 
 const loading = ref(true)
@@ -89,7 +82,6 @@ const settings = reactive<PrivacySettings>({
   show_stats: true,
   show_photos: true,
   show_medals: true,
-  show_checkin_streak: true,
 })
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null

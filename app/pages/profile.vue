@@ -17,9 +17,6 @@
             <div class="exp-fill" :style="{ width: (levelInfo.cur / levelInfo.need * 100) + '%' }" />
           </div>
         </div>
-        <div class="header-streak">
-          🔥 连续签到 <strong>{{ checkinState.streak }}</strong> 天
-        </div>
         <template #fallback>
           <div class="header-avatar">✈️</div>
           <div class="header-info">
@@ -48,14 +45,6 @@
         <div class="stat-card">
           <div class="stat-value">{{ citiesCount }}<span class="stat-total">/{{ totalCities }}</span></div>
           <div class="stat-label">探索城市</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">{{ checkinState.total }}</div>
-          <div class="stat-label">累计签到</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">{{ checkinState.maxStreak }}</div>
-          <div class="stat-label">最高连续签到</div>
         </div>
       </section>
     </ClientOnly>
@@ -191,15 +180,6 @@ import { COUNTRIES } from '~/data/countries'
 const { state: gameState, levelInfo, avatar, completedCount, medalCount, countriesCount } = useGameState()
 const { authState, logout } = useAuth()
 const { getPhotos } = usePhotoCheckin()
-
-// These composables have deep dependency chains — protect against init failures
-let checkinState = ref({ streak: 0, total: 0, maxStreak: 0, lastDate: null as string | null })
-try {
-  const dc = useDailyCheckin()
-  checkinState = dc.state as typeof checkinState
-} catch {
-  // fallback to defaults
-}
 
 let achUnlockedCount = ref(0)
 let achTotalCount = 0
@@ -361,14 +341,6 @@ const recentPhotos = computed(() => {
   background: linear-gradient(90deg, var(--accent), var(--accent2));
   border-radius: 4px;
   transition: width 1s ease;
-}
-.header-streak {
-  font-size: 14px;
-  color: var(--muted);
-}
-.header-streak strong {
-  color: #ff6b35;
-  font-size: 18px;
 }
 
 /* 区域 2：核心数据卡片 */

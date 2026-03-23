@@ -13,7 +13,6 @@ export interface AchievementStatus {
 
 export function useAchievements() {
   const { state: gameState } = useGameState()
-  const { state: checkinState } = useDailyCheckin()
   const { getPhotos } = usePhotoCheckin()
 
   const allTasks = Object.values(TASKS).flat()
@@ -100,14 +99,8 @@ export function useAchievements() {
       case 'exp_total':
         return { current: gameState.value.exp, target: cond.amount }
 
-      case 'streak':
-        return { current: checkinState.value.maxStreak, target: cond.days }
-
       case 'photos_total':
         return { current: getPhotos().length, target: cond.count }
-
-      case 'checkin_total':
-        return { current: checkinState.value.total, target: cond.count }
 
       default:
         return { current: 0, target: 1 }
