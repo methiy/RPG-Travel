@@ -67,7 +67,7 @@ export function findGroupByPath(path: string): NavGroup {
     for (const item of group.items) {
       if (item.path === '/') {
         if (path === '/') return group
-      } else if (path.startsWith(item.path)) {
+      } else if (path === item.path || path.startsWith(item.path + '/')) {
         return group
       }
     }
