@@ -83,45 +83,6 @@
       </section>
     </ClientOnly>
 
-    <!-- 快捷入口 -->
-    <NuxtLink to="/achievements" class="timeline-link">
-      <span class="timeline-link-icon">🏆</span>
-      <span class="timeline-link-text">旅行成就</span>
-      <ClientOnly><span class="ach-badge">{{ achUnlockedCount }}/{{ achTotalCount }}</span></ClientOnly>
-      <span class="timeline-link-arrow">→</span>
-    </NuxtLink>
-
-    <NuxtLink to="/challenges" class="timeline-link">
-      <span class="timeline-link-icon">📋</span>
-      <span class="timeline-link-text">每周挑战</span>
-      <ClientOnly><span class="ach-badge">{{ challengeCompleted }}/3</span></ClientOnly>
-      <span class="timeline-link-arrow">→</span>
-    </NuxtLink>
-
-    <NuxtLink to="/planner" class="timeline-link">
-      <span class="timeline-link-icon">🗺️</span>
-      <span class="timeline-link-text">路线规划器</span>
-      <span class="timeline-link-arrow">→</span>
-    </NuxtLink>
-
-    <NuxtLink to="/weather" class="timeline-link">
-      <span class="timeline-link-icon">🌤️</span>
-      <span class="timeline-link-text">目的地天气</span>
-      <span class="timeline-link-arrow">→</span>
-    </NuxtLink>
-
-    <NuxtLink to="/community" class="timeline-link">
-      <span class="timeline-link-icon">📸</span>
-      <span class="timeline-link-text">照片社区</span>
-      <span class="timeline-link-arrow">→</span>
-    </NuxtLink>
-
-    <NuxtLink to="/settings" class="timeline-link">
-      <span class="timeline-link-icon">⚙️</span>
-      <span class="timeline-link-text">隐私设置</span>
-      <span class="timeline-link-arrow">→</span>
-    </NuxtLink>
-
     <!-- 区域 5：最近获得的勋章 -->
     <ClientOnly>
       <section class="section-card">
@@ -155,13 +116,6 @@
       </section>
     </ClientOnly>
 
-    <!-- 旅行时间线入口 -->
-    <NuxtLink to="/timeline" class="timeline-link">
-      <span class="timeline-link-icon">📅</span>
-      <span class="timeline-link-text">查看旅行时间线</span>
-      <span class="timeline-link-arrow">→</span>
-    </NuxtLink>
-
     <!-- 退出登录 -->
     <ClientOnly>
       <section v-if="authState.user" class="logout-section">
@@ -180,27 +134,6 @@ import { COUNTRIES } from '~/data/countries'
 const { state: gameState, levelInfo, avatar, completedCount, medalCount, countriesCount } = useGameState()
 const { authState, logout } = useAuth()
 const { getPhotos } = usePhotoCheckin()
-
-let achUnlockedCount = ref(0)
-let achTotalCount = 0
-try {
-  const ach = useAchievements()
-  achUnlockedCount = ach.unlockedCount as typeof achUnlockedCount
-  achTotalCount = ach.totalCount
-} catch {
-  // fallback
-}
-
-// useWeeklyChallenges may fail during initialization, protect profile page
-let weeklyChallenges = ref<{ isComplete: boolean }[]>([])
-try {
-  const wc = useWeeklyChallenges()
-  weeklyChallenges = computed(() => wc.challenges.value) as typeof weeklyChallenges
-} catch {
-  // Silently fail — challenges badge will show 0/3
-}
-
-const challengeCompleted = computed(() => weeklyChallenges.value.filter(c => c.isComplete).length)
 
 const allTasks = computed(() => Object.values(TASKS).flat())
 
@@ -525,44 +458,6 @@ const recentPhotos = computed(() => {
   color: var(--muted);
   text-align: center;
   padding: 20px 0;
-}
-
-/* 时间线入口 */
-.timeline-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  text-decoration: none;
-  transition: all 0.2s;
-}
-.timeline-link:hover {
-  border-color: var(--accent);
-  background: rgba(74, 158, 255, 0.04);
-}
-.timeline-link-icon {
-  font-size: 20px;
-}
-.timeline-link-text {
-  flex: 1;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-}
-.timeline-link-arrow {
-  font-size: 14px;
-  color: var(--accent);
-}
-.ach-badge {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--accent);
-  background: rgba(74, 158, 255, 0.1);
-  padding: 2px 8px;
-  border-radius: 10px;
 }
 
 /* 区域 7：退出登录 */

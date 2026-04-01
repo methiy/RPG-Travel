@@ -5,6 +5,13 @@
     <NuxtLink to="/games" class="navbtn" :class="{ active: route.path.startsWith('/games') }">🎮 小游戏</NuxtLink>
     <NuxtLink to="/leaderboard" class="navbtn" :class="{ active: route.path.startsWith('/leaderboard') }">🏆 排行榜</NuxtLink>
     <NuxtLink to="/photos" class="navbtn" :class="{ active: route.path.startsWith('/photos') }">📷 我的照片</NuxtLink>
+    <NuxtLink to="/achievements" class="navbtn" :class="{ active: route.path.startsWith('/achievements') }">🏆 旅行成就</NuxtLink>
+    <NuxtLink to="/challenges" class="navbtn" :class="{ active: route.path.startsWith('/challenges') }">📋 每周挑战</NuxtLink>
+    <NuxtLink to="/planner" class="navbtn" :class="{ active: route.path.startsWith('/planner') }">🗺️ 路线规划</NuxtLink>
+    <NuxtLink to="/weather" class="navbtn" :class="{ active: route.path.startsWith('/weather') }">🌤️ 目的地天气</NuxtLink>
+    <NuxtLink to="/community" class="navbtn" :class="{ active: route.path.startsWith('/community') }">📸 照片社区</NuxtLink>
+    <NuxtLink to="/timeline" class="navbtn" :class="{ active: route.path.startsWith('/timeline') }">📅 时间线</NuxtLink>
+    <NuxtLink to="/settings" class="navbtn" :class="{ active: route.path.startsWith('/settings') }">⚙️ 设置</NuxtLink>
     <NuxtLink to="/profile" class="navbtn" :class="{ active: route.path.startsWith('/profile') }">👤 我的</NuxtLink>
   </nav>
 </template>
