@@ -2,8 +2,11 @@
   <div>
     <template v-if="!authState.loading && authState.user">
       <TopBar />
-      <MainNav />
-      <slot />
+      <SubNav />
+      <div class="page-content">
+        <slot />
+      </div>
+      <BottomTabBar />
       <AchievementModal />
     </template>
     <div v-else-if="authState.loading" class="loading-screen">
@@ -18,6 +21,10 @@ const { authState } = useAuth()
 </script>
 
 <style scoped>
+.page-content {
+  padding-bottom: 64px;
+}
+
 .loading-screen {
   min-height: 100vh;
   display: flex;
