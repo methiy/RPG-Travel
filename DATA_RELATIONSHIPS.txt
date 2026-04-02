@@ -1,0 +1,299 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║         NUXT 4 TRAVEL RPG - DATA STRUCTURE RELATIONSHIPS                   ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌─ USER ────────────────────────────────────────────────────────────────────┐
+│  id: number                                                                 │
+│  username: string                                                           │
+│  displayName: string                                                        │
+│  └─ Many:1                                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+       │
+       ├──→ GAME STATE (localStorage['travelrpg2'] + DB)
+       │    ├─ exp: number (总经验)
+       │    ├─ completed: string[] (任务ID数组)
+       │    └─ medals: string[] (勋章ID数组)
+       │         │
+       │         ├──→ LEVEL INFO (computed)
+       │         │    ├─ lv: 1-8
+       │         │    ├─ title: "初级背包客" ... "宇宙漫游者"
+       │         │    └─ avatar: ✈️ 🌍 🗺️ 🧳 🏅 🌟 👑 🚀
+       │         │
+       │         └──→ TASK → MEDAL
+       │              └─ Each completed task earns its medal
+       │
+       ├──→ CHECK-IN PHOTOS (localStorage['travelrpg2_photos'] + DB)
+       │    ├─ id: number (server-assigned)
+       │    ├─ taskId: string ──┐
+       │    ├─ dataUrl: string  │
+       │    ├─ timestamp: number│
+       │    ├─ lat/lng: number  │
+       │    └─ comment: string  │
+       │                        │
+       │    └──→ References TASK (for metadata)
+       │
+       ├──→ ACHIEVEMENTS (computed from game state)
+       │    ├─ tasks_total: 1, 5, 15, 30, 50, 100
+       │    ├─ countries_total: 3, 8, 15
+       │    ├─ cities_total: 5, 20, 50
+       │    ├─ difficulty: easy, medium, hard, legendary
+       │    ├─ medals_total: 5, 20, 50
+       │    ├─ exp_total: 500, 2000, 5000
+       │    ├─ tasks_continent: asia, europe, americas, africa-me, oceania
+       │    └─ photos_total: 1, 10, 30
+       │
+       └──→ PROFILE STATS (computed)
+            ├─ completedCount / totalTasks
+            ├─ medalCount / totalMedals
+            ├─ countriesCount / totalCountries
+            ├─ citiesCount / totalCities
+            ├─ continentProgress[]
+            │  └─ [{ emoji, name, visited, total }, ...]
+            ├─ difficultyStats[]
+            │  └─ [{ label, color, count }, ...]
+            ├─ recentMedals[] (last 6)
+            └─ recentPhotos[] (last 4)
+
+
+┌─ TASKS (Data-only) ───────────────────────────────────────────────────────┐
+│  100+ Tasks organized by Geography                                          │
+│                                                                             │
+│  /app/data/tasks/                                                           │
+│  ├─ argentina.ts            ──→ { id, city, name, difficulty, exp, medal } │
+│  ├─ australia.ts                                                           │
+│  ├─ brazil.ts                                                              │
+│  ├─ china/                                                                 │
+│  │  ├─ beijing.ts                                                          │
+│  │  ├─ shanghai.ts                                                         │
+│  │  ├─ chengdu.ts                                                          │
+│  │  └─ ... (20+ Chinese cities)                                            │
+│  ├─ france.ts                                                              │
+│  ├─ japan.ts                                                               │
+│  ├─ usa.ts                                                                 │
+│  └─ ... (30+ countries)                                                    │
+│                                                                             │
+│  Each Task has:                                                             │
+│  ├─ id: string                                                              │
+│  ├─ country: string (ID)                                                    │
+│  ├─ city: string                                                            │
+│  ├─ name: string                                                            │
+│  ├─ difficulty: 'easy' | 'medium' | 'hard' | 'legendary'                   │
+│  ├─ exp: number                                                             │
+│  ├─ medal: { id, icon, name, desc }                                        │
+│  ├─ objectives: string[]                                                    │
+│  ├─ guide?: { tips, foodSpots, transport, bestTime, etc }                  │
+│  └─ location?: { lat, lng, radius }                                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+                │
+                └─→ Completed by USER → Earns EXP + Medal + Achievement progress
+
+
+┌─ GEOGRAPHIC DATA ─────────────────────────────────────────────────────────┐
+│                                                                             │
+│  CONTINENTS (5 total)                                                       │
+│  ├─ Asia (亚洲)          [8 countries]                                      │
+│  ├─ Europe (欧洲)        [7 countries]                                      │
+│  ├─ Americas (美洲)      [5 countries]                                      │
+│  ├─ Africa-ME (非洲中东) [varies]                                           │
+│  └─ Oceania (大洋洲)     [varies]                                           │
+│
+│  ↓ Each contains
+│
+│  COUNTRIES (30+ total)
+│  ├─ Japan (日本)
+│  │  ├─ visas: string
+│  │  ├─ currency: string
+│  │  ├─ language: string[]
+│  │  ├─ guide: CountryGuide
+│  │  └─ cities: string[] ─┐
+│  │                       │
+│  │  ├─ China (中国)      │
+│  │  │  ├─ Beijing        │
+│  │  │  ├─ Shanghai       │
+│  │  │  ├─ Chengdu        │
+│  │  │  └─ ... (20+)      │
+│  │                       │
+│  │  ├─ USA (美国)        │
+│  │  │  ├─ New York       │
+│  │  │  ├─ Los Angeles    │
+│  │  │  └─ ...            │
+│  │                       │
+│  └─ France, Germany,    │
+│     Italy, UK, etc...   │
+│                         │
+│  ↓ Each contains        │
+│                         │
+│  CITIES (100+ total) ◄──┘
+│  ├─ id: string
+│  ├─ name: string
+│  ├─ emoji: string
+│  ├─ guide?: CityGuide { transport, weather, highlights }
+│  └─ description: string
+│
+│  ↓ Each contains 1+ TASKS (see above)
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ MEDALS (All recorded in gameState.medals[]) ──────────────────────────────┐
+│                                                                             │
+│  TASK MEDALS (100+)                                                         │
+│  └─ One per task, earned on completion                                     │
+│     ├─ id: string                                                           │
+│     ├─ icon: string (emoji)                                                 │
+│     ├─ name: string                                                         │
+│     └─ desc: string                                                         │
+│
+│  GAME MEDALS (6)                                                            │
+│  ├─ 🧭 Quiz Master       - Answer all quiz questions correctly             │
+│  ├─ 🧳 Packing Pro       - Perfect packing game                            │
+│  ├─ ⚡ Speed Landmarks   - Match landmarks in 60 seconds                    │
+│  ├─ 🏳️  Flag Master       - 75%+ accuracy on flag quiz                      │
+│  ├─ 📏 Distance Master   - 15% avg error on distance quiz                   │
+│  └─ 💰 Currency Master   - 70%+ accuracy on currency quiz                   │
+│
+│  Total medals count tracked in: gameState.medals.length
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ ACHIEVEMENTS (40+ total) ────────────────────────────────────────────────┐
+│  Computed from gameState in real-time                                       │
+│                                                                             │
+│  EXPLORER (Location-based)                                                  │
+│  ├─ Task Milestones: 1, 5, 15, 30, 50, 100 tasks                           │
+│  ├─ Countries: 3, 8, 15 countries                                           │
+│  ├─ Cities: 5, 20, 50 cities                                                │
+│  ├─ Continents: Master each continent (all countries)                       │
+│  └─ Countries: Master specific countries (all tasks)                        │
+│
+│  COLLECTOR (Medals)                                                         │
+│  └─ 5, 20, 50 medals                                                        │
+│
+│  CHALLENGER (Difficulty & EXP)                                              │
+│  ├─ Easy: 10 tasks                                                          │
+│  ├─ Medium: 10 tasks                                                        │
+│  ├─ Hard: 5, 15 tasks                                                       │
+│  ├─ Legendary: 1, 5 tasks                                                   │
+│  └─ EXP: 500, 2000, 5000 total                                              │
+│
+│  SOCIAL (Photos)                                                            │
+│  └─ 1, 10, 30 photos                                                        │
+│
+│  Each tracked with:
+│  ├─ id, icon, name, desc
+│  ├─ category: 'explorer' | 'collector' | 'challenge' | 'social'
+│  ├─ condition: type-specific
+│  ├─ unlocked: boolean (computed)
+│  ├─ current: number (progress)
+│  └─ target: number (goal)
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ TIMELINE (app/pages/timeline.vue) ────────────────────────────────────────┐
+│  Combines Photos + Completed Tasks                                          │
+│                                                                             │
+│  interface TimelineEntry {                                                  │
+│    id: string                                                                │
+│    date: string          // YYYY-MM-DD                                      │
+│    timestamp: number                                                        │
+│    icon: string          // 📷 for photos, ✅ for tasks                     │
+│    title: string         // Task name                                       │
+│    subtitle?: string     // Country · City                                  │
+│    photoUrl?: string     // From CheckinPhoto.dataUrl                       │
+│    comment?: string      // From CheckinPhoto.comment                       │
+│    exp?: number          // From Task.exp                                   │
+│  }                                                                           │
+│                                                                             │
+│  Sorted by date (newest first)                                              │
+│  Grouped by date                                                            │
+│  Tasks without photos shown as "未知日期" (unknown date)                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                      EXPORT DATA CANDIDATES                                 ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+TIER 1: ESSENTIAL (Always include)
+├─ User profile (username, displayName)
+├─ Game state (exp, completed[], medals[])
+├─ Current level & title
+├─ Total statistics (tasks, medals, countries, cities)
+└─ Timestamp of export
+
+TIER 2: IMPORTANT (Should include)
+├─ Achievement status (unlocked count, total count)
+├─ Continental progress
+├─ Difficulty distribution
+├─ Photo metadata (count, recent items)
+└─ Task completion details (which tasks, when)
+
+TIER 3: OPTIONAL (Nice to have)
+├─ Photos (as base64 or separate ZIP)
+├─ AI photo analysis results
+├─ Photo comments & metadata
+└─ Leaderboard position (reference only)
+
+TIER 4: EXCLUDE (Privacy)
+❌ Server tokens
+❌ Other users' data
+❌ Payment info (if any)
+❌ Server-only IDs
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                      EXPORT FORMAT OPTIONS                                  ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+FORMAT      SIZE        READABILITY  COMPATIBILITY  USE CASE
+─────────────────────────────────────────────────────────────────────────────
+JSON        50-500KB    Medium       Excellent      Data backup, import/export
+CSV         10-50KB     High         Excellent      Spreadsheet analysis
+HTML        100-1MB     Excellent    Good           Browser view, sharing
+PDF         200-2MB     Excellent    Universal      Printing, archiving
+ZIP         500-3MB     Medium       Good           Complete package
+─────────────────────────────────────────────────────────────────────────────
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                       STORAGE ESTIMATES                                     ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+Per User (Casual - 10 tasks, 5 photos):
+├─ GameState: ~0.5KB
+├─ Metadata: ~2KB
+├─ 5 photos @ 80KB: ~400KB
+└─ TOTAL: ~403KB
+
+Per User (Active - 50 tasks, 20 photos):
+├─ GameState: ~2KB
+├─ Metadata: ~5KB
+├─ 20 photos @ 100KB: ~2MB
+└─ TOTAL: ~2MB
+
+Per User (Power - 100 tasks, 50 photos):
+├─ GameState: ~4KB
+├─ Metadata: ~10KB
+├─ 50 photos @ 120KB: ~6MB
+└─ TOTAL: ~6MB
+
+For 1000 users (avg 2MB): ~2GB total
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                         SERVER ENDPOINTS                                    ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+GET  /api/progress              → Fetch game state
+PUT  /api/progress              → Save game state
+
+GET  /api/photos                → Fetch all photos
+POST /api/photos                → Save new photo
+PUT  /api/photos/[id]           → Update photo comment
+
+GET  /api/auth/me               → Current user info
+
+POTENTIAL NEW ENDPOINTS:
+POST /api/export                → Generate export file
+GET  /api/export/[id]           → Download export file
+GET  /api/export/status/[id]    → Check export progress
+
