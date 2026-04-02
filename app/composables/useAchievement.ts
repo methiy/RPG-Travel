@@ -15,6 +15,10 @@ export function useAchievement() {
   function show(info: AchievementData) {
     data.value = info
     visible.value = true
+
+    // Trigger celebration animation
+    const { celebrate } = useCelebration()
+    celebrate(info.icon, info.title)
   }
 
   function close() {

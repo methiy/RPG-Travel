@@ -8,6 +8,8 @@
       </div>
       <BottomTabBar />
       <AchievementModal />
+      <AchievementCelebration />
+      <AchievementCelebration />
     </template>
     <div v-else-if="authState.loading" class="loading-screen">
       <div class="loading-logo">🌍</div>
