@@ -112,6 +112,17 @@ async function initDB(): Promise<void> {
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS checklists (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        country_id VARCHAR(50) NOT NULL,
+        completed_items JSONB DEFAULT '[]',
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, country_id)
+      )
+    `
   } catch (err) {
     console.error('[initDB] Table creation failed:', err)
     // Still mark initialized to avoid infinite retry loops on every request
@@ -486,4 +497,29 @@ export async function getShareById(id: string): Promise<ShareDBRecord | undefine
     snapshot: (typeof row.snapshot === 'string' ? JSON.parse(row.snapshot) : row.snapshot) as Record<string, unknown>,
     created_at: row.created_at as string,
   }
+}
+
+// ---- Checklist API ----
+
+export async function getChecklist(userId: number, countryId: string): Promise<string[]> {
+  await initDB()
+  const { rows } = await sql`
+    SELECT completed_items FROM checklists
+    WHERE user_id = ${userId} AND country_id = ${countryId}
+    LIMIT 1
+  `
+  if (!rows[0]) return []
+  const raw = rows[0].completed_items
+  return (typeof raw === 'string' ? JSON.parse(raw) : raw) as string[]
+}
+
+export async function saveChecklist(userId: number, countryId: string, completedItems: string[]): Promise<void> {
+  await initDB()
+  const json = JSON.stringify(completedItems)
+  await sql`
+    INSERT INTO checklists (user_id, country_id, completed_items, updated_at)
+    VALUES (${userId}, ${countryId}, ${json}::jsonb, NOW())
+    ON CONFLICT (user_id, country_id)
+    DO UPDATE SET completed_items = ${json}::jsonb, updated_at = NOW()
+  `
 }
