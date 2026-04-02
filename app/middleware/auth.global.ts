@@ -8,7 +8,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const publicPages = ['/login', '/register']
   const isAuthPage = publicPages.includes(to.path)
-  const isPublic = isAuthPage || to.path.startsWith('/user/')
+  const isPublic = isAuthPage || to.path.startsWith('/user/') || to.path.startsWith('/share/')
 
   if (!authState.value.user && !isPublic) {
     return navigateTo('/login')
