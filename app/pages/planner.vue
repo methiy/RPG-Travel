@@ -1,8 +1,20 @@
 <template>
   <div class="planner-page">
-    <h2>🗺️ 旅行路线规划器</h2>
-    <p>{{ stepDescription }}</p>
+    <div class="tab-bar">
+      <button
+        class="tab-btn"
+        :class="{ active: activeTab === 'planner' }"
+        @click="activeTab = 'planner'"
+      >🗺️ 行程规划</button>
+      <button
+        class="tab-btn"
+        :class="{ active: activeTab === 'checklist' }"
+        @click="activeTab = 'checklist'"
+      >✅ 出行清单</button>
+    </div>
+    <p v-if="activeTab === 'planner'">{{ stepDescription }}</p>
 
+    <template v-if="activeTab === 'planner'">
     <!-- Step indicator -->
     <div class="step-bar">
       <div
@@ -249,6 +261,46 @@
       :country="currentCountry?.name"
       :city="selectedCityName || undefined"
     />
+    </template>
+
+    <!-- ═══ Checklist Tab ═══ -->
+    <template v-if="activeTab === 'checklist'">
+      <ClientOnly>
+        <section v-if="!selectedCountry" class="planner-select">
+          <div class="planner-search">
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="🔍 搜索国家..."
+              class="search-input"
+            />
+          </div>
+          <div class="country-grid">
+            <div
+              v-for="c in filteredCountries"
+              :key="c.id"
+              class="country-card"
+              @click="selectCountryForChecklist(c.id)"
+            >
+              <div class="country-emoji">{{ c.emoji }}</div>
+              <div class="country-name">{{ c.name }}</div>
+            </div>
+          </div>
+        </section>
+
+        <section v-else class="checklist-content">
+          <button class="back-btn" @click="selectedCountry = null">← 选择其他国家</button>
+          <div class="route-header">
+            <div class="route-country">{{ currentCountry?.emoji }} {{ currentCountry?.name }} 出行清单</div>
+          </div>
+          <ChecklistPanel :country-id="selectedCountry" />
+        </section>
+
+        <template #fallback>
+          <div class="planner-loading">加载中...</div>
+        </template>
+      </ClientOnly>
+    </template>
   </div>
 </template>
 
@@ -263,6 +315,7 @@ const { isTaskCompleted } = useGameState()
 const { getTasksForCity, getCityNamesForCountry, buildItinerary, DAY_COLORS } = useCityPlanner()
 
 // ── State ──────────────────────────────────────────────
+const activeTab = ref<'planner' | 'checklist'>('planner')
 const step = ref(1)
 const searchQuery = ref('')
 const selectedCountry = ref<string | null>(null)
@@ -316,6 +369,10 @@ const currentCountry = computed(() =>
 function selectCountry(id: string) {
   selectedCountry.value = id
   step.value = 2
+}
+
+function selectCountryForChecklist(id: string) {
+  selectedCountry.value = id
 }
 
 // ── Step 2: City selection ─────────────────────────────
@@ -1025,5 +1082,33 @@ function renderMarkdown(text: string): string {
   border-radius: 10px;
   color: var(--red);
   font-size: 13px;
+}
+
+/* Tab bar */
+.tab-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.tab-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tab-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(74, 158, 255, 0.08);
+}
+.tab-btn:hover:not(.active) {
+  border-color: var(--accent);
+  color: var(--text);
 }
 </style>
