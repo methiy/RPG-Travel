@@ -4,6 +4,11 @@
   </NuxtLayout>
 </template>
 
+<script setup lang="ts">
+const { init } = useTheme()
+onMounted(() => init())
+</script>
+
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -13,6 +18,14 @@
   --red: #ff5555; --text: #e8eaf6; --muted: #6b7fa3;
   --theme-primary: #4a9eff; --theme-secondary: #7b5ea7;
   --theme-card-bg: linear-gradient(135deg, #131828, #0d1020);
+}
+
+[data-theme="light"] {
+  --bg: #ffffff; --bg2: #f5f5f7; --bg3: #e8e8ed; --border: #d2d2d7;
+  --accent: #0071e3; --accent2: #7b5ea7; --gold: #e8a800; --green: #28a745;
+  --red: #ff3b30; --text: #1d1d1f; --muted: #86868b;
+  --theme-primary: #0071e3; --theme-secondary: #7b5ea7;
+  --theme-card-bg: linear-gradient(135deg, #f5f5f7, #ffffff);
 }
 
 body {
