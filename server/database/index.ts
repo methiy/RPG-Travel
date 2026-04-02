@@ -102,6 +102,16 @@ async function initDB(): Promise<void> {
     await sql`
       ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_settings JSONB DEFAULT NULL
     `
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS shares (
+        id VARCHAR(8) PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        template VARCHAR(20) NOT NULL,
+        snapshot JSONB NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `
   } catch (err) {
     console.error('[initDB] Table creation failed:', err)
     // Still mark initialized to avoid infinite retry loops on every request
@@ -409,4 +419,71 @@ export async function saveAISettings(userId: number, settings: AISettingsRecord)
   await initDB()
   const json = JSON.stringify(settings)
   await sql`UPDATE users SET ai_settings = ${json}::jsonb WHERE id = ${userId}`
+}
+
+// ---- Share/Export API ----
+
+export interface ShareDBRecord {
+  id: string
+  user_id: number
+  template: string
+  snapshot: Record<string, unknown>
+  created_at: string
+}
+
+function generateShareId(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let id = ''
+  for (let i = 0; i < 8; i++) {
+    id += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return id
+}
+
+export async function createShare(
+  userId: number,
+  template: string,
+  snapshot: Record<string, unknown>,
+): Promise<ShareDBRecord> {
+  await initDB()
+
+  // Check user share count limit (max 50)
+  const { rows: countRows } = await sql`
+    SELECT COUNT(*) as cnt FROM shares WHERE user_id = ${userId}
+  `
+  if (Number(countRows[0]?.cnt ?? 0) >= 50) {
+    throw new Error('Share limit reached (max 50)')
+  }
+
+  const id = generateShareId()
+  const snapshotJson = JSON.stringify(snapshot)
+
+  const { rows } = await sql`
+    INSERT INTO shares (id, user_id, template, snapshot)
+    VALUES (${id}, ${userId}, ${template}, ${snapshotJson}::jsonb)
+    RETURNING *
+  `
+
+  const row = rows[0] as Record<string, unknown>
+  return {
+    id: row.id as string,
+    user_id: row.user_id as number,
+    template: row.template as string,
+    snapshot: (typeof row.snapshot === 'string' ? JSON.parse(row.snapshot) : row.snapshot) as Record<string, unknown>,
+    created_at: row.created_at as string,
+  }
+}
+
+export async function getShareById(id: string): Promise<ShareDBRecord | undefined> {
+  await initDB()
+  const { rows } = await sql`SELECT * FROM shares WHERE id = ${id} LIMIT 1`
+  if (!rows[0]) return undefined
+  const row = rows[0] as Record<string, unknown>
+  return {
+    id: row.id as string,
+    user_id: row.user_id as number,
+    template: row.template as string,
+    snapshot: (typeof row.snapshot === 'string' ? JSON.parse(row.snapshot) : row.snapshot) as Record<string, unknown>,
+    created_at: row.created_at as string,
+  }
 }
