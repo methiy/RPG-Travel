@@ -2,6 +2,9 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   ssr: false,
+  routeRules: {
+    '/share/**': { ssr: true },
+  },
   runtimeConfig: {
     authSecret: process.env.AUTH_SECRET || '',
   },
