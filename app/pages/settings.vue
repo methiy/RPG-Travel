@@ -9,6 +9,24 @@
       </div>
 
       <template v-else>
+        <!-- ══ Theme Settings ══ -->
+        <div class="settings-section">
+          <h3>🎨 主题设置</h3>
+          <p class="section-desc">切换深色或浅色主题</p>
+          <div class="theme-toggle">
+            <button
+              class="theme-btn"
+              :class="{ active: isDark }"
+              @click="setDark(true)"
+            >🌙 深色</button>
+            <button
+              class="theme-btn"
+              :class="{ active: !isDark }"
+              @click="setDark(false)"
+            >☀️ 浅色</button>
+          </div>
+        </div>
+
         <!-- ══ Privacy Settings ══ -->
         <div class="settings-section">
           <h3>🔒 隐私设置</h3>
@@ -170,6 +188,12 @@ interface PrivacySettings {
   show_stats: boolean
   show_photos: boolean
   show_medals: boolean
+}
+
+const { isDark, toggle } = useTheme()
+
+function setDark(dark: boolean) {
+  if (isDark.value !== dark) toggle()
 }
 
 const loading = ref(true)
@@ -627,5 +651,31 @@ onMounted(() => {
   .ai-actions {
     flex-direction: column;
   }
+}
+
+/* Theme toggle */
+.theme-toggle {
+  display: flex;
+  gap: 8px;
+}
+.theme-btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background: var(--bg3);
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.theme-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(74, 158, 255, 0.08);
+}
+.theme-btn:hover:not(.active) {
+  border-color: var(--accent);
 }
 </style>
