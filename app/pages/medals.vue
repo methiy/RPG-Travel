@@ -1,7 +1,12 @@
 <template>
   <div class="medals-page">
-    <h2>🏅 勋章收藏馆</h2>
-    <p>完成旅游任务和小游戏挑战，解锁你的专属旅行勋章</p>
+    <div class="medals-header">
+      <div>
+        <h2>🏅 勋章收藏馆</h2>
+        <p>完成旅游任务和小游戏挑战，解锁你的专属旅行勋章</p>
+      </div>
+      <NuxtLink to="/export?template=medals" class="share-btn">📤 分享</NuxtLink>
+    </div>
 
     <div class="medals-filter">
       <button
@@ -59,14 +64,35 @@ const displayedMedals = computed(() => {
 .medals-page {
   padding: 24px;
 }
-.medals-page h2 {
+.medals-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.medals-header h2 {
   font-size: 22px;
   font-weight: 800;
   margin-bottom: 6px;
 }
+.medals-header > div > p {
+  color: var(--muted);
+  margin-bottom: 0;
+}
 .medals-page > p {
   color: var(--muted);
   margin-bottom: 24px;
+}
+.share-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #1a1a2e;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 .medals-filter {
   display: flex;

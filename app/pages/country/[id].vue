@@ -74,6 +74,7 @@ function onComplete(mode: 'checkin' | 'virtual', expMultiplier: number) {
       <span> › </span>
       <span>{{ country.name }}</span>
     </div>
+    <NuxtLink :to="`/export?template=trip&country=${id}`" class="share-btn">📤 分享此旅行</NuxtLink>
 
     <div class="city-tabs" :class="{ 'city-tabs-scroll': country.cities.length > 10 }">
       <button
@@ -201,6 +202,17 @@ function onComplete(mode: 'checkin' | 'virtual', expMultiplier: number) {
   padding: 48px 24px;
   color: var(--muted);
   font-size: 16px;
+}
+.share-btn {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4a9eff, #7b5ea7);
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 @media (max-width: 640px) {

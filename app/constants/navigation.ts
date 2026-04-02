@@ -51,6 +51,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: '我的',
     items: [
       { path: '/profile', label: '个人资料' },
+      { path: '/export', label: '分享导出' },
       { path: '/settings', label: '设置' },
     ],
   },

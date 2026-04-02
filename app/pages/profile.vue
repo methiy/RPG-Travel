@@ -17,6 +17,7 @@
             <div class="exp-fill" :style="{ width: (levelInfo.cur / levelInfo.need * 100) + '%' }" />
           </div>
         </div>
+        <NuxtLink to="/export?template=overview" class="share-btn">📤 分享我的成就</NuxtLink>
         <template #fallback>
           <div class="header-avatar">✈️</div>
           <div class="header-info">
@@ -483,6 +484,20 @@ const recentPhotos = computed(() => {
   background: rgba(231, 76, 60, 0.1);
   border-color: #e74c3c;
 }
+
+.share-btn {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 10px 24px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #4a9eff, #7b5ea7);
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.2s;
+}
+.share-btn:hover { transform: translateY(-1px); }
 
 /* 响应式 */
 @media (max-width: 640px) {
