@@ -218,3 +218,56 @@ export interface ItineraryDay {
   safetyNotes: string[]
   photoTips: string[]
 }
+
+// ── Share/Export Types ────────────────────────────────
+export type ShareTemplate = 'overview' | 'trip' | 'medals'
+
+export interface OverviewSnapshot {
+  username: string
+  displayName: string
+  avatar: string
+  level: number
+  title: string
+  exp: number
+  countriesCount: number
+  citiesCount: number
+  completedCount: number
+  medalCount: number
+  achievementCount: number
+}
+
+export interface TripSnapshot {
+  username: string
+  displayName: string
+  avatar: string
+  level: number
+  title: string
+  countryId: string
+  countryName: string
+  countryEmoji: string
+  cities: string[]
+  completedTasks: number
+  totalTasks: number
+  medals: Array<{ icon: string; name: string }>
+  photos: string[]  // dataUrl strings, max 4
+}
+
+export interface MedalsSnapshot {
+  username: string
+  displayName: string
+  avatar: string
+  level: number
+  title: string
+  earnedMedals: Array<{ icon: string; name: string }>
+  totalMedals: number
+  rarestMedal: { icon: string; name: string } | null
+}
+
+export type ShareSnapshotData = OverviewSnapshot | TripSnapshot | MedalsSnapshot
+
+export interface ShareRecord {
+  id: string
+  template: ShareTemplate
+  snapshot: ShareSnapshotData
+  createdAt: string
+}
