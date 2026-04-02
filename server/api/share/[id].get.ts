@@ -1,4 +1,4 @@
-import { getShareById } from '~/server/database'
+import { getShareById } from '../../database/index'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')

@@ -1,4 +1,4 @@
-import { createShare } from '~/server/database'
+import { createShare } from '../../database/index'
 
 export default defineEventHandler(async (event) => {
   const user = event.context.user
